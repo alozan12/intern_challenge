@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --asu-maroon: 140 29 64;
+    --asu-gold: 255 198 39;
+    --asu-gray: 92 102 112;
+    --asu-light-gray: 245 245 245;
+  }
+
+  html, body {
+    @apply h-full overflow-hidden;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 h-screen overflow-hidden;
+  }
+}
+
+@layer components {
+  .card-shadow {
+    @apply shadow-md hover:shadow-lg transition-shadow duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-asu-maroon text-white px-4 py-2 rounded-md hover:bg-red-900 transition-colors duration-200;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-asu-maroon border border-asu-maroon px-4 py-2 rounded-md hover:bg-asu-light-gray transition-colors duration-200;
+  }
+  
+  /* Hide scrollbars */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+}
