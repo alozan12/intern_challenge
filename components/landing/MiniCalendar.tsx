@@ -36,9 +36,9 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
   const emptyDays = Array.from({ length: startingDayOfWeek }, (_, i) => i)
 
   return (
-    <div className="bg-white rounded-lg card-shadow p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Calendar</h3>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2">
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="text-sm font-semibold text-gray-700">Calendar</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={handlePreviousMonth}
@@ -60,15 +60,15 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 mb-2">
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
-          <div key={day} className="text-xs font-medium text-gray-500 text-center py-1">
+          <div key={day} className="text-xs font-medium text-gray-500 text-center py-0.5">
             {day}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5">
         {emptyDays.map((_, index) => (
           <div key={`empty-${index}`} className="aspect-square" />
         ))}
@@ -83,7 +83,7 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
               key={day.toISOString()}
               href={`/calendar?date=${format(day, 'yyyy-MM-dd')}`}
               className={cn(
-                "aspect-square p-1 flex flex-col items-center justify-center rounded-md transition-colors relative",
+                "aspect-square p-0.5 flex flex-col items-center justify-center rounded-md transition-colors relative",
                 isCurrentDay && "bg-asu-maroon text-white",
                 !isCurrentDay && hasDeadlines && "bg-asu-gold/20 hover:bg-asu-gold/30",
                 !isCurrentDay && !hasDeadlines && "hover:bg-gray-100",
@@ -109,10 +109,10 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
         })}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-100">
+      <div className="mt-1 pt-1 border-t border-gray-100 text-center">
         <Link 
           href="/calendar" 
-          className="text-sm text-asu-maroon hover:underline flex items-center justify-center gap-1"
+          className="text-xs text-asu-maroon hover:underline flex items-center justify-center gap-1"
         >
           View full calendar
           <ArrowRight className="w-3 h-3" />

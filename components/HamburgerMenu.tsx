@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Menu, X, Home, BookOpen, BarChart3, GraduationCap, Calendar, Settings } from 'lucide-react'
+import { Menu, X, Home, BookOpen, BarChart3, GraduationCap, Calendar, Settings, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
@@ -48,47 +48,56 @@ export function HamburgerMenu() {
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="p-4 border-b">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">Menu</h2>
-            <button
-              onClick={toggleMenu}
-              className="p-1 hover:bg-gray-100 rounded-md"
-              aria-label="Close menu"
-            >
-              <X className="w-5 h-5 text-gray-700" />
-            </button>
-          </div>
-        </div>
-
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {menuItems.map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  onClick={toggleMenu}
-                  className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
-                >
-                  <item.icon className="w-5 h-5 text-gray-600" />
-                  <span className="text-gray-900">{item.label}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
-          <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-10 h-10 bg-asu-maroon rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold">SC</span>
+        {/* No back button */}
+        
+        {/* App info */}
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-md bg-[#8C1D40] flex items-center justify-center">
+              <span className="text-white font-bold text-lg">SC</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-900">Study Coach</p>
-              <p className="text-xs text-gray-500">ASU Student Portal</p>
+              <h2 className="text-lg font-semibold text-gray-900">Study Coach</h2>
+              <p className="text-sm text-gray-500">ASU Student Portal</p>
             </div>
           </div>
+          <button 
+            onClick={toggleMenu}
+            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
+            aria-label="Close menu"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
         </div>
+
+        {/* Navigation */}
+        <nav className="mt-4">
+          <ul>
+            {menuItems.map((item, index) => {
+              const isActive = index === 0; // Set Home as active for demo
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={toggleMenu}
+                    className={cn(
+                      "flex items-center gap-3 px-6 py-3 transition-colors",
+                      isActive 
+                        ? "bg-[#8C1D40] text-white" 
+                        : "text-gray-700 hover:bg-gray-100"
+                    )}
+                  >
+                    <item.icon className={cn(
+                      "w-5 h-5", 
+                      isActive ? "text-white" : "text-gray-500"
+                    )} />
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
       </div>
     </>
   )

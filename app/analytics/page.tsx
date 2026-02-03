@@ -351,7 +351,6 @@ export default function AnalyticsPage() {
   return (
     <div className="px-8 py-6">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
         <span className="text-sm text-gray-600">Last updated: Today, 12:30 PM</span>
       </div>
       

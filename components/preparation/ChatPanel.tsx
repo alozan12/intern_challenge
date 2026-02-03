@@ -116,7 +116,9 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                   "text-xs mt-1",
                   message.role === 'user' ? "text-red-200" : "text-gray-500"
                 )}>
-                  {format(message.timestamp, 'h:mm a')}
+                  <span suppressHydrationWarning>
+                    {format(message.timestamp, 'h:mm a')}
+                  </span>
                 </p>
               </div>
             </div>

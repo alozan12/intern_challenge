@@ -128,7 +128,6 @@ export default function SettingsPage() {
   
   return (
     <div className="px-8 py-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Settings</h1>
       
       <Tabs defaultValue="account" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-6 bg-gray-100 p-1 rounded-md">

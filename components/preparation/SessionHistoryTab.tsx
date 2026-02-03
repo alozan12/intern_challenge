@@ -98,7 +98,7 @@ export function SessionHistoryTab({ courseId }: SessionHistoryTabProps) {
                   {session.title}
                 </h4>
                 <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                  <span>{format(session.date, 'MMM d, yyyy')}</span>
+                  <span suppressHydrationWarning>{format(session.date, 'MMM d, yyyy')}</span>
                   <span>•</span>
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />

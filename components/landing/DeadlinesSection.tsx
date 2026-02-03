@@ -76,7 +76,7 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Filters section */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-3 border-b border-gray-200">
         <div className="flex flex-col md:flex-row gap-4">
           {/* Search input */}
           <div className="flex-1 relative">
@@ -88,7 +88,7 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search deadlines..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
+              className="w-full pl-10 pr-4 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
             />
           </div>
           
@@ -96,12 +96,12 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
           <div className="flex items-center gap-3">
             {/* Course filter */}
             <div className="flex items-center gap-2">
-              <label htmlFor="course-filter" className="text-sm font-medium text-gray-700">Course:</label>
+              <label htmlFor="course-filter" className="text-xs font-medium text-gray-700">Course:</label>
               <select
                 id="course-filter"
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value === 'all' ? 'all' : e.target.value)}
-                className="border border-gray-300 rounded-md py-2 pl-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
+                className="border border-gray-300 rounded-md py-1.5 pl-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
               >
                 <option value="all">All Courses</option>
                 {uniqueCourses.map(course => (
@@ -114,12 +114,12 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
             
             {/* Type filter */}
             <div className="flex items-center gap-2">
-              <label htmlFor="type-filter" className="text-sm font-medium text-gray-700">Type:</label>
+              <label htmlFor="type-filter" className="text-xs font-medium text-gray-700">Type:</label>
               <select
                 id="type-filter"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value === 'all' ? 'all' : e.target.value as Deadline['type'])}
-                className="border border-gray-300 rounded-md py-2 pl-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
+                className="border border-gray-300 rounded-md py-1.5 pl-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
               >
                 <option value="all">All Types</option>
                 <option value="assignment">Assignments</option>
@@ -133,10 +133,10 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
       </div>
       
       {/* Deadlines list */}
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-100 max-h-[200px] overflow-y-auto scrollbar-thin">
         {filteredDeadlines.length > 0 ? (
           filteredDeadlines.map((deadline) => (
-            <div key={deadline.id} className="p-4 hover:bg-gray-50 transition-colors">
+            <div key={deadline.id} className="p-3 hover:bg-gray-50 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1">
                   {/* Course indicator */}
@@ -168,7 +168,7 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>{format(deadline.dueDate, 'MMM d, h:mm a')}</span>
+                        <span suppressHydrationWarning>{format(deadline.dueDate, 'MMM d, h:mm a')}</span>
                       </div>
                     </div>
                   </div>
@@ -177,10 +177,10 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
                 {/* Prepare button */}
                 <Link 
                   href={`/preparation/${deadline.courseId}/${deadline.id}`}
-                  className="btn-primary flex items-center gap-2 text-sm"
+                  className="px-2 py-1 bg-asu-maroon text-white rounded-md text-xs flex items-center gap-1 hover:bg-asu-maroon/90"
                 >
                   Prepare
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-2 h-2" />
                 </Link>
               </div>
             </div>

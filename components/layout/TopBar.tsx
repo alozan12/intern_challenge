@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Clock, Bell, MessageSquare, Users, X, PlayCircle, PauseCircle, RotateCcw } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { Clock, Bell, MessageSquare, Users, X, PlayCircle, PauseCircle, RotateCcw, SunMedium } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Pomodoro Timer Tool
@@ -321,12 +322,62 @@ function UsersTool() {
 }
 
 export function TopBar() {
+  const pathname = usePathname();
+  const isLandingPage = pathname === '/';
+  
+  // Get current date and time-appropriate greeting (always calculate for the date)
+  const { formattedDate, greeting } = getTimeBasedGreeting();
+  
+  // Get page title based on current path
+  const getPageTitle = () => {
+    if (isLandingPage) return `${greeting}, Sun Devil!`;
+    if (pathname.startsWith('/preparation')) return "Preparation Center";
+    if (pathname.startsWith('/analytics')) return "Analytics";
+    if (pathname.startsWith('/calendar')) return "Academic Calendar";
+    if (pathname.startsWith('/settings')) return "Settings";
+    return "";
+  }
+  
+  const pageTitle = getPageTitle();
+  
   return (
-    <div className="h-14 bg-white border-b border-gray-200 shadow-sm flex items-center justify-end px-8 gap-3 z-40 relative">
-      <PomodoroTool />
-      <RemindersTool />
-      <AIChatTool />
-      <UsersTool />
+    <div className="h-14 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-8 z-40 relative">
+      <div className="flex items-center">
+        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          {pageTitle} {isLandingPage && <SunMedium className="text-yellow-400 h-6 w-6" />}
+        </h1>
+        <p className="text-gray-500 ml-4">{formattedDate}</p>
+      </div>
+      <div className="flex items-center gap-3">
+        <PomodoroTool />
+        <RemindersTool />
+        <AIChatTool />
+        <UsersTool />
+      </div>
     </div>
   )
+}
+
+// Helper function to get time-appropriate greeting and formatted date
+function getTimeBasedGreeting() {
+  const today = new Date();
+  const currentHour = today.getHours();
+  
+  // Determine greeting based on time of day
+  let greeting;
+  if (currentHour < 12) {
+    greeting = 'Good morning';
+  } else if (currentHour < 18) {
+    greeting = 'Good afternoon';
+  } else {
+    greeting = 'Good evening';
+  }
+  
+  // Format date
+  const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
+  const month = today.toLocaleDateString('en-US', { month: 'long' });
+  const date = today.getDate();
+  const formattedDate = `${dayOfWeek}, ${month} ${date}`;
+  
+  return { formattedDate, greeting };
 }
