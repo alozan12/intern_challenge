@@ -1,0 +1,11 @@
+.git
+_design-system
+node_modules
+.next
+*.log
+.DS_Store
+*.env
+README.md
+style_guide.md
+preparation.png
+Screenshot 2026-02-02 at 10.48.29 AM.png

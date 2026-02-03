@@ -262,7 +262,7 @@ export function KnowledgeBaseTab({ courseId }: KnowledgeBaseTabProps) {
           <div className="flex items-center gap-2">
             {lastSaved && (
               <span className="text-xs text-gray-500">
-                Last saved: {format(lastSaved, 'h:mm a')}
+                Last saved: <span suppressHydrationWarning>{format(lastSaved, 'h:mm a')}</span>
               </span>
             )}
           </div>

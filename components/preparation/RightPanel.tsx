@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, X, FileText, Brain, List, Lightbulb, HelpCircle, Filter, AlertCircle, BookOpen } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Plus, X, FileText, Brain, List, Lightbulb, HelpCircle, Filter, AlertCircle, BookOpen, ChevronDown } from 'lucide-react'
 import { StudyMaterial } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -71,9 +71,25 @@ export function RightPanel({ courseId }: RightPanelProps) {
   const [createdMaterials, setCreatedMaterials] = useState<StudyMaterial[]>([])
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null)
   const [contentFocus, setContentFocus] = useState<ContentFocus>('all')
-  const [showContentFocusOptions, setShowContentFocusOptions] = useState(false)
+  const [showFocusDropdown, setShowFocusDropdown] = useState(false)
+  const [showSectionsDropdown, setShowSectionsDropdown] = useState(false)
   const [specificSections, setSpecificSections] = useState<string[]>([])
-  const [selectedMaterialType, setSelectedMaterialType] = useState<StudyMaterial['type']>('flashcards')
+  const [selectedMaterialType, setSelectedMaterialType] = useState<StudyMaterial['type'] | null>(null)
+  
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowFocusDropdown(false)
+        setShowSectionsDropdown(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const contentFocusOptions: ContentFocusOption[] = [
     {
@@ -106,9 +122,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
   ]
 
   const handleCreateMaterial = (type: StudyMaterial['type']) => {
-    // Show content focus options instead of immediately creating
     setSelectedMaterialType(type)
-    setShowContentFocusOptions(true)
     setShowOptions(false)
   }
   
@@ -125,7 +139,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
     const newMaterial: StudyMaterial = {
       id: Date.now().toString(),
       type,
-      title: `${studyOptions.find(o => o.type === type)?.label}${focusLabel} - ${format(new Date(), 'MMM d')}`,
+      title: `${studyOptions.find(o => o.type === type)?.label}${focusLabel} - ${format(new Date(), 'MMM d')}`,  // This is for material creation, not display
       content: {
         contentFocus,
         specificSections: contentFocus === 'specific_sections' ? specificSections : []
@@ -134,9 +148,12 @@ export function RightPanel({ courseId }: RightPanelProps) {
     }
     
     setCreatedMaterials(prev => [...prev, newMaterial])
-    setShowContentFocusOptions(false)
+    // Reset the form
+    setSelectedMaterialType(null)
     setContentFocus('all')
     setSpecificSections([])
+    setShowFocusDropdown(false)
+    setShowSectionsDropdown(false)
   }
   
   const toggleSection = (sectionId: string) => {
@@ -210,99 +227,135 @@ export function RightPanel({ courseId }: RightPanelProps) {
         </div>
       )}
       
-      {/* Content Focus Options */}
-      {showContentFocusOptions && (
-        <div className="border-b border-gray-200 p-4 bg-gray-50">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-medium text-sm text-gray-700">Content Focus:</h3>
-            <button 
-              onClick={() => setShowContentFocusOptions(false)}
-              className="p-1 text-gray-400 hover:text-gray-600 transition-all rounded-md hover:bg-gray-200"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <Tabs defaultValue="focus" className="w-full">
-            <TabsList className="border-b border-gray-200 w-full pb-2 mb-3">
-              <TabsTrigger 
-                value="focus" 
-                className="mr-4 px-1 py-0.5 border-b-2 data-[state=active]:border-asu-maroon data-[state=inactive]:border-transparent data-[state=active]:text-asu-maroon"
+      {/* Material Creation Interface with Integrated Dropdowns */}
+      {!showOptions && selectedMaterialType && (
+        <div ref={dropdownRef} className="border-b border-gray-200 p-4 bg-gray-50">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "p-2 rounded-md",
+                  studyOptions.find(o => o.type === selectedMaterialType)?.color.split(' ').slice(0, 2).join(' ')
+                )}>
+                  {studyOptions.find(o => o.type === selectedMaterialType)?.icon}
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm">{studyOptions.find(o => o.type === selectedMaterialType)?.label}</h3>
+                  <p className="text-xs text-gray-500">Configure your study material</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedMaterialType(null)}
+                className="p-1 text-gray-400 hover:text-gray-600 transition-all rounded-md hover:bg-gray-200"
               >
-                Content Focus
-              </TabsTrigger>
-              {contentFocus === 'specific_sections' && (
-                <TabsTrigger 
-                  value="sections" 
-                  className="px-1 py-0.5 border-b-2 data-[state=active]:border-asu-maroon data-[state=inactive]:border-transparent data-[state=active]:text-asu-maroon"
-                >
-                  Select Sections
-                </TabsTrigger>
-              )}
-            </TabsList>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
             
-            <TabsContent value="focus" className="space-y-2">
-              {contentFocusOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setContentFocus(option.value)}
-                  className={cn(
-                    "w-full p-3 rounded-lg text-left transition-all border",
-                    contentFocus === option.value
-                      ? "border-asu-maroon bg-red-50"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={cn(
-                      "p-2 rounded-md",
-                      contentFocus === option.value
-                        ? "bg-red-100 text-asu-maroon"
-                        : "bg-gray-100 text-gray-600"
-                    )}>
-                      {option.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{option.label}</h4>
-                      <p className="text-xs opacity-80 mt-0.5">{option.description}</p>
-                    </div>
+            {/* Content Focus Dropdown */}
+            <div className="relative">
+              <div className="text-xs text-gray-500 mb-1">Content Focus</div>
+              <div 
+                className="border border-gray-300 rounded-md p-2 flex justify-between items-center cursor-pointer hover:border-gray-400"
+                onClick={() => setShowFocusDropdown(!showFocusDropdown)}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="text-gray-600">
+                    {contentFocusOptions.find(o => o.value === contentFocus)?.icon}
                   </div>
-                </button>
-              ))}
-            </TabsContent>
-            
-            {contentFocus === 'specific_sections' && (
-              <TabsContent value="sections" className="space-y-2">
-                {courseSections.map((section) => (
-                  <div
-                    key={section.id}
-                    onClick={() => toggleSection(section.id)}
-                    className={cn(
-                      "w-full p-3 rounded-lg text-left transition-all border flex items-center",
-                      specificSections.includes(section.id)
-                        ? "border-asu-maroon bg-red-50"
-                        : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-5 h-5 rounded mr-3 flex items-center justify-center border",
-                      specificSections.includes(section.id)
-                        ? "bg-asu-maroon border-asu-maroon text-white"
-                        : "border-gray-300 bg-white"
-                    )}>
-                      {specificSections.includes(section.id) && (
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                  <span className="text-sm">{contentFocusOptions.find(o => o.value === contentFocus)?.label}</span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              </div>
+              
+              {showFocusDropdown && (
+                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg">
+                  {contentFocusOptions.map((option) => (
+                    <div
+                      key={option.value}
+                      className={cn(
+                        "flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer",
+                        contentFocus === option.value ? "bg-red-50" : ""
                       )}
+                      onClick={() => {
+                        setContentFocus(option.value)
+                        setShowFocusDropdown(false)
+                        // If specific sections is selected, open the sections dropdown
+                        if (option.value === 'specific_sections') {
+                          setTimeout(() => setShowSectionsDropdown(true), 100)
+                        }
+                      }}
+                    >
+                      <div className={cn(
+                        "text-gray-600",
+                        contentFocus === option.value ? "text-asu-maroon" : ""
+                      )}>
+                        {option.icon}
+                      </div>
+                      <div>
+                        <div className={cn(
+                          "text-sm",
+                          contentFocus === option.value ? "font-medium text-asu-maroon" : ""
+                        )}>
+                          {option.label}
+                        </div>
+                        <div className="text-xs text-gray-500">{option.description}</div>
+                      </div>
                     </div>
-                    <span className="text-sm">{section.title}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Specific Sections Dropdown (only when 'specific_sections' is selected) */}
+            {contentFocus === 'specific_sections' && (
+              <div className="relative">
+                <div className="text-xs text-gray-500 mb-1">Selected Sections ({specificSections.length})</div>
+                <div 
+                  className="border border-gray-300 rounded-md p-2 flex justify-between items-center cursor-pointer hover:border-gray-400"
+                  onClick={() => setShowSectionsDropdown(!showSectionsDropdown)}
+                >
+                  <span className="text-sm">
+                    {specificSections.length === 0 
+                      ? "Select sections" 
+                      : `${specificSections.length} section${specificSections.length > 1 ? 's' : ''} selected`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                </div>
+                
+                {showSectionsDropdown && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                    {courseSections.map((section) => (
+                      <div
+                        key={section.id}
+                        className={cn(
+                          "flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer",
+                          specificSections.includes(section.id) ? "bg-red-50" : ""
+                        )}
+                        onClick={() => toggleSection(section.id)}
+                      >
+                        <div className={cn(
+                          "w-4 h-4 rounded border flex items-center justify-center",
+                          specificSections.includes(section.id) 
+                            ? "bg-asu-maroon border-asu-maroon text-white" 
+                            : "border-gray-300"
+                        )}>
+                          {specificSections.includes(section.id) && (
+                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-sm">{section.title}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </TabsContent>
+                )}
+              </div>
             )}
             
-            <div className="mt-4 flex justify-end">
+            {/* Generate Button */}
+            <div className="mt-2 flex justify-end">
               <button
                 onClick={() => handleCreateFinalMaterial(selectedMaterialType)}
                 className="px-4 py-2 bg-asu-maroon text-white rounded-lg hover:bg-red-900 transition-colors text-sm font-medium"
@@ -310,7 +363,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
                 Generate Material
               </button>
             </div>
-          </Tabs>
+          </div>
         </div>
       )}
 
@@ -338,7 +391,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
                       {material.title}
                     </h4>
                     <p className="text-xs text-gray-500">
-                      {format(material.createdAt, 'h:mm a')}
+                      <span suppressHydrationWarning>{format(material.createdAt, 'h:mm a')}</span>
                     </p>
                   </div>
                   <button

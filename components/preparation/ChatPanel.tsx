@@ -27,16 +27,17 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
   const courseInfo = getCourseInfo(courseId)
   
   // Initialize messages with course-specific content
-  const initialMessages: ChatMessage[] = [
-    {
-      id: '1',
-      role: 'assistant',
-      content: `Hello! I'm your AI Study Coach for ${courseInfo.code}. I'm here to help you prepare for your upcoming assignment. What specific topics would you like to review?`,
-      timestamp: new Date()
-    }
-  ]
+  const createInitialMessage = () => ({
+    id: Date.now().toString(),
+    role: 'assistant' as const,
+    content: `Hello! I'm your AI Study Coach for ${courseInfo.code}. I'm here to help you prepare for your upcoming assignment. What specific topics would you like to review?`,
+    timestamp: new Date()
+  })
+  
+  const initialMessages: ChatMessage[] = [createInitialMessage()]
   
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
+  const [pastSessions, setPastSessions] = useState<ChatMessage[][]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -88,8 +89,31 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="border-b border-gray-200 px-6 py-4">
-        <h2 className="text-lg font-semibold text-gray-900">AI Study Coach</h2>
-        <p className="text-sm text-gray-600">Ask questions about your course content</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">AI Study Coach</h2>
+            <p className="text-sm text-gray-600">Ask questions about your course content</p>
+          </div>
+          <button 
+            onClick={() => {
+              console.log('Starting new session');
+              // Only save session if it has user messages
+              if (messages.length > 1) {
+                console.log('Saving old session', messages);
+                // Save current session to history
+                setPastSessions(prev => [...prev, [...messages]]);
+              }
+              
+              // Start a new session with initial AI greeting
+              const newInitialMessage = createInitialMessage();
+              console.log('New initial message', newInitialMessage);
+              setMessages([newInitialMessage]);
+            }}
+            className="px-3 py-1.5 text-sm bg-asu-maroon text-white rounded-md hover:bg-red-900 transition-colors flex items-center gap-1"
+          >
+            Start New Session
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -116,7 +140,9 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                   "text-xs mt-1",
                   message.role === 'user' ? "text-red-200" : "text-gray-500"
                 )}>
-                  {format(message.timestamp, 'h:mm a')}
+                  <span suppressHydrationWarning>
+                    {format(message.timestamp, 'h:mm a')}
+                  </span>
                 </p>
               </div>
             </div>

@@ -1,8 +1,11 @@
 'use client'
 
 import { DeadlinesSection } from '@/components/landing/DeadlinesSection'
+import { ActivityStreak } from '@/components/landing/ActivityStreak'
+import { ClickableAnalyticsCard } from '@/components/landing/ClickableAnalyticsCard'
+import { PreviousSessionCard } from '@/components/landing/PreviousSessionCard'
+import { AIInsights } from '@/components/landing/AIInsights'
 import { MiniCalendar } from '@/components/landing/MiniCalendar'
-import { AnalyticsPreview } from '@/components/landing/AnalyticsPreview'
 import { Course, Deadline, Analytics } from '@/types'
 import { SunMedium } from 'lucide-react'
 
@@ -108,37 +111,53 @@ const mockAnalytics: Analytics = {
   overallProgress: 74,
   confidence: 68,
   studyStreak: 12,
-  hoursStudied: 24.5
+  hoursStudied: 24.5,
+  level: 'B2',
+  levelProgress: 82,
+  lastTested: '23 Sep 2024'
 }
 
 const allDeadlines: Deadline[] = mockCourses.flatMap(course => course.upcomingDeadlines)
 
 export default function LandingPage() {
-  // Get current date for greeting
-  const today = new Date();
-  const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
-  const month = today.toLocaleDateString('en-US', { month: 'long' });
-  const date = today.getDate();
-  const formattedDate = `${dayOfWeek}, ${month} ${date}`;
-
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">Good morning, Sun Devil! <SunMedium className="text-yellow-400 h-8 w-8" /></h1>
-        <p className="text-gray-500 mt-1">{formattedDate}</p>
+    <div className="p-4">
+      {/* Page content without the greeting */}
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
       </div>
       
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Left Section: Deadlines (3/4 width) */}
-        <section className="lg:w-3/4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Upcoming Deadlines</h2>
-          <DeadlinesSection courses={mockCourses} />
+      <div className="flex flex-col lg:flex-row gap-4 max-w-full overflow-hidden">
+        {/* Left Section: Cards and AI Insights (66% width) */}
+        <section className="w-full lg:w-2/3">
+          {/* Top cards - three columns */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+            <div className="h-[200px]">
+              <ActivityStreak daysInARow={mockAnalytics.studyStreak} />
+            </div>
+            <div className="h-[200px]">
+              <ClickableAnalyticsCard />
+            </div>
+            <div className="h-[200px]">
+              <PreviousSessionCard 
+                level={mockAnalytics.level || 'N/A'} 
+                progress={mockAnalytics.levelProgress || 0} 
+                lastTested={mockAnalytics.lastTested || 'Never'} 
+              />
+            </div>
+          </div>
+          
+          {/* AI Insights */}
+          <AIInsights />
         </section>
 
-        {/* Right Section: Calendar and Analytics (1/4 width) */}
-        <aside className="lg:w-1/4 space-y-6">
-          <MiniCalendar deadlines={allDeadlines} />
-          <AnalyticsPreview analytics={mockAnalytics} />
+        {/* Right Section: Deadlines (33% width) */}
+        <aside className="w-full lg:w-1/3">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">Upcoming Deadlines</h2>
+          <div className="space-y-4">
+            <DeadlinesSection courses={mockCourses} />
+            <MiniCalendar deadlines={allDeadlines} />
+          </div>
         </aside>
       </div>
     </div>

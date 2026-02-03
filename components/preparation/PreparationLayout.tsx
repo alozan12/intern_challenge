@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { LeftPanel } from './LeftPanel'
 import { ChatPanel } from './ChatPanel'
 import { RightPanel } from './RightPanel'
-import { PanelLeftClose, PanelLeft } from 'lucide-react'
+import { PanelLeft } from 'lucide-react'
 
 interface PreparationLayoutProps {
   courseId: string
@@ -30,6 +30,20 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
   const [isResizingLeft, setIsResizingLeft] = useState(false)
   const [isResizingRight, setIsResizingRight] = useState(false)
   const [isLeftPanelMinimized, setIsLeftPanelMinimized] = useState(false)
+  
+  // Find background color for this course
+  const getCourseColor = () => {
+    const courses: Record<string, string> = {
+      '1': '#8C1D40',
+      '2': '#FF6900',
+      '3': '#00A3E0',
+      '4': '#78BE20',
+      '5': '#6B46C1'
+    }
+    return courses[courseId] || '#8C1D40'
+  }
+  
+  const courseColor = getCourseColor()
   
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -80,6 +94,7 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
       ref={containerRef}
       className="flex h-full bg-gray-50 relative overflow-hidden"
     >
+      <div className="w-full absolute top-0 h-1" style={{ backgroundColor: courseColor }}></div>
         {/* Left Panel */}
         <div 
           style={{ width: isLeftPanelMinimized ? '3%' : `${leftPanelWidth}%` }}
@@ -97,13 +112,6 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
             </div>
           ) : (
             <>
-              <button
-                onClick={() => setIsLeftPanelMinimized(true)}
-                className="absolute top-2 right-2 z-10 p-1.5 hover:bg-gray-100 rounded-md transition-colors"
-                title="Minimize panel"
-              >
-                <PanelLeftClose className="w-4 h-4 text-gray-600" />
-              </button>
               <LeftPanel courseId={courseId} />
             </>
           )}

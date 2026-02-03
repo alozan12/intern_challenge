@@ -118,7 +118,7 @@ export function CourseCard({ course }: CourseCardProps) {
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            <span>{format(deadline.dueDate, 'MMM d, h:mm a')}</span>
+                            <span suppressHydrationWarning>{format(deadline.dueDate, 'MMM d, h:mm a')}</span>
                           </div>
                         </div>
                       </div>

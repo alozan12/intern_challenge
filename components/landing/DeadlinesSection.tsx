@@ -76,32 +76,32 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
       {/* Filters section */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="p-3 border-b border-gray-250">
+        <div className="flex flex-col gap-2">
           {/* Search input */}
-          <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Search className="w-4 h-4 text-gray-400" />
+          <div className="w-full relative">
+            <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
+              <Search className="w-3 h-3 text-gray-400" />
             </div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search deadlines..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
+              className="w-full pl-8 pr-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
             />
           </div>
           
           {/* Filters dropdown */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-1 justify-between">
             {/* Course filter */}
             <div className="flex items-center gap-2">
-              <label htmlFor="course-filter" className="text-sm font-medium text-gray-700">Course:</label>
+              <label htmlFor="course-filter" className="text-xs font-medium text-gray-700 whitespace-nowrap">Course:</label>
               <select
                 id="course-filter"
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value === 'all' ? 'all' : e.target.value)}
-                className="border border-gray-300 rounded-md py-2 pl-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
+                className="border border-gray-300 rounded-md py-0.5 pl-1 pr-6 text-xs focus:outline-none focus:ring-1 focus:ring-asu-maroon/50 focus:border-asu-maroon"
               >
                 <option value="all">All Courses</option>
                 {uniqueCourses.map(course => (
@@ -114,12 +114,12 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
             
             {/* Type filter */}
             <div className="flex items-center gap-2">
-              <label htmlFor="type-filter" className="text-sm font-medium text-gray-700">Type:</label>
+              <label htmlFor="type-filter" className="text-xs font-medium text-gray-700 whitespace-nowrap">Type:</label>
               <select
                 id="type-filter"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value === 'all' ? 'all' : e.target.value as Deadline['type'])}
-                className="border border-gray-300 rounded-md py-2 pl-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
+                className="border border-gray-300 rounded-md py-0.5 pl-1 pr-6 text-xs focus:outline-none focus:ring-1 focus:ring-asu-maroon/50 focus:border-asu-maroon"
               >
                 <option value="all">All Types</option>
                 <option value="assignment">Assignments</option>
@@ -133,22 +133,22 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
       </div>
       
       {/* Deadlines list */}
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-100 max-h-[180px] overflow-y-auto scrollbar-thin">
         {filteredDeadlines.length > 0 ? (
           filteredDeadlines.map((deadline) => (
-            <div key={deadline.id} className="p-4 hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
+            <div key={deadline.id} className="p-2 hover:bg-gray-50 transition-colors">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                 <div className="flex items-center gap-4 flex-1">
                   {/* Course indicator */}
                   <div 
-                    className="w-3 h-12 rounded-full" 
+                    className="w-2 h-10 rounded-full" 
                     style={{ backgroundColor: deadline.courseColor }}
                   ></div>
                   
                   <div className="flex-1">
                     {/* Deadline title and course */}
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-gray-900">{deadline.title}</p>
+                    <div className="flex items-center flex-wrap gap-2 mb-1">
+                      <p className="font-medium text-gray-900 text-sm">{deadline.title}</p>
                       <span className={cn(
                         "px-2 py-0.5 text-xs font-medium rounded-full",
                         getDeadlineTypeColor(deadline.type)
@@ -158,17 +158,17 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
                     </div>
                     
                     {/* Course code */}
-                    <p className="text-sm text-gray-600 mb-1">{deadline.courseCode} - {deadline.courseName}</p>
+                    <p className="text-xs text-gray-600 mb-1">{deadline.courseCode} - {deadline.courseName}</p>
                     
                     {/* Due date */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         <span>{getDeadlineLabel(deadline.dueDate)}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>{format(deadline.dueDate, 'MMM d, h:mm a')}</span>
+                        <span suppressHydrationWarning>{format(deadline.dueDate, 'MMM d, h:mm a')}</span>
                       </div>
                     </div>
                   </div>
@@ -177,10 +177,10 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
                 {/* Prepare button */}
                 <Link 
                   href={`/preparation/${deadline.courseId}/${deadline.id}`}
-                  className="btn-primary flex items-center gap-2 text-sm"
+                  className="px-2 py-1 bg-asu-maroon text-white rounded-md text-xs flex items-center gap-1 hover:bg-asu-maroon/90"
                 >
                   Prepare
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-2 h-2" />
                 </Link>
               </div>
             </div>

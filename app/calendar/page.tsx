@@ -242,7 +242,6 @@ export default function CalendarPage() {
 
       <div className="bg-white rounded-lg shadow-md">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">Academic Calendar</h1>
           <div className="flex items-center gap-2">
             <button
               onClick={handlePreviousMonth}

@@ -28,6 +28,9 @@ export interface Analytics {
   confidence: number
   studyStreak: number
   hoursStudied: number
+  level?: string
+  levelProgress?: number
+  lastTested?: string
 }
 
 // Preparation page types

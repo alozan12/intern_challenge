@@ -36,39 +36,47 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
   const emptyDays = Array.from({ length: startingDayOfWeek }, (_, i) => i)
 
   return (
-    <div className="bg-white rounded-lg card-shadow p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Calendar</h3>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-xs font-semibold text-gray-700">Calendar</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={handlePreviousMonth}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-0.5 hover:bg-gray-100 rounded"
             aria-label="Previous month"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3 h-3" />
           </button>
-          <span className="text-sm font-medium min-w-[100px] text-center">
+          <span className="text-xs font-medium min-w-[70px] text-center overflow-hidden text-ellipsis whitespace-nowrap">
             {format(currentMonth, 'MMMM yyyy')}
           </span>
           <button
             onClick={handleNextMonth}
-            className="p-1 hover:bg-gray-100 rounded"
+            className="p-0.5 hover:bg-gray-100 rounded"
             aria-label="Next month"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3 h-3" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
-          <div key={day} className="text-xs font-medium text-gray-500 text-center py-1">
-            {day}
+      <div className="grid grid-cols-7 gap-0 mb-0.5">
+        {[
+          { day: 'S', key: 'sun' }, 
+          { day: 'M', key: 'mon' }, 
+          { day: 'T', key: 'tue' }, 
+          { day: 'W', key: 'wed' }, 
+          { day: 'T', key: 'thu' }, 
+          { day: 'F', key: 'fri' }, 
+          { day: 'S', key: 'sat' }
+        ].map((item) => (
+          <div key={item.key} className="text-xs font-medium text-gray-500 text-center py-0">
+            {item.day}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0">
         {emptyDays.map((_, index) => (
           <div key={`empty-${index}`} className="aspect-square" />
         ))}
@@ -83,21 +91,21 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
               key={day.toISOString()}
               href={`/calendar?date=${format(day, 'yyyy-MM-dd')}`}
               className={cn(
-                "aspect-square p-1 flex flex-col items-center justify-center rounded-md transition-colors relative",
+                "aspect-square p-0 flex flex-col items-center justify-center rounded-md transition-colors relative text-xs",
                 isCurrentDay && "bg-asu-maroon text-white",
                 !isCurrentDay && hasDeadlines && "bg-asu-gold/20 hover:bg-asu-gold/30",
                 !isCurrentDay && !hasDeadlines && "hover:bg-gray-100",
                 !isSameMonth(day, currentMonth) && "text-gray-300"
               )}
             >
-              <span className="text-sm">{format(day, 'd')}</span>
+              <span className="text-xs font-medium">{format(day, 'd')}</span>
               {hasDeadlines && (
-                <div className="flex gap-0.5 mt-0.5">
+                <div className="flex gap-0.5 mt-0">
                   {dayDeadlines.slice(0, 3).map((_, idx) => (
                     <div
                       key={idx}
                       className={cn(
-                        "w-1 h-1 rounded-full",
+                        "w-0.5 h-0.5 rounded-full",
                         isCurrentDay ? "bg-white" : "bg-asu-maroon"
                       )}
                     />
@@ -109,13 +117,13 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
         })}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-gray-100">
+      <div className="mt-0.5 pt-0.5 border-t border-gray-100 text-center">
         <Link 
           href="/calendar" 
-          className="text-sm text-asu-maroon hover:underline flex items-center justify-center gap-1"
+          className="text-[0.65rem] text-asu-maroon hover:underline flex items-center justify-center gap-0.5"
         >
           View full calendar
-          <ArrowRight className="w-3 h-3" />
+          <ArrowRight className="w-2 h-2" />
         </Link>
       </div>
     </div>

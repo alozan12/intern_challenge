@@ -204,7 +204,7 @@ export default function PreparationDetailPage() {
           </div>
           <div className="text-right">
             <div className="text-sm text-gray-600">
-              Due {format(mockDeadline.dueDate, 'MMM d, yyyy')} at {format(mockDeadline.dueDate, 'h:mm a')}
+              <span suppressHydrationWarning>Due {format(mockDeadline.dueDate, 'MMM d, yyyy')} at {format(mockDeadline.dueDate, 'h:mm a')}</span>
             </div>
             <div className="mt-1">
               <span className={cn("inline-block text-xs px-2 py-0.5 rounded-full font-medium",
@@ -303,7 +303,7 @@ export default function PreparationDetailPage() {
                     </div>
                     {item.lastAccessed && (
                       <p className="text-xs text-gray-500 mt-1 ml-6">
-                        Viewed {format(item.lastAccessed, 'MMM d')}
+                        <span suppressHydrationWarning>Viewed {format(item.lastAccessed, 'MMM d')}</span>
                       </p>
                     )}
                   </div>
@@ -333,7 +333,7 @@ export default function PreparationDetailPage() {
                 <div className={cn("text-xs mt-1 text-gray-500",
                   message.role === 'user' && "text-right"
                 )}>
-                  {format(message.timestamp, 'h:mm a')}
+                  <span suppressHydrationWarning>{format(message.timestamp, 'h:mm a')}</span>
                 </div>
               </div>
             ))}
@@ -384,7 +384,7 @@ export default function PreparationDetailPage() {
                     <div>
                       <p className="font-medium text-gray-800">{material.title}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Created {format(material.createdAt, 'MMM d, yyyy')}
+                        <span suppressHydrationWarning>Created {format(material.createdAt, 'MMM d, yyyy')}</span>
                       </p>
                     </div>
                     <span className="text-xs px-2 py-0.5 bg-gray-200 text-gray-800 rounded-full">

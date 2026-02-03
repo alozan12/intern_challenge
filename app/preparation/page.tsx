@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Course, Deadline } from '@/types'
-import { ChevronRight, ChevronLeft, Clock, Calendar, Check, BookOpen, ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronRight, Clock, Calendar, Check, ChevronUp, ChevronDown, FileText, FileQuestion, BookOpen, MessageSquare } from 'lucide-react'
 import { format, isPast, isFuture, isToday, isTomorrow, formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { AnimatePresence, motion } from 'framer-motion'
 
 // Mock data with additional past deadlines for demonstration
 const mockCourses: Course[] = [
@@ -208,17 +209,19 @@ const mockCourses: Course[] = [
   }
 ]
 
-// Function to get appropriate icon for deadline type
+// Function to get appropriate icon component for deadline type
 function getDeadlineIcon(type: Deadline['type']) {
   switch (type) {
     case 'assignment':
-      return '📝'
+      return FileText
     case 'quiz':
-      return '📊'
+      return FileQuestion
     case 'exam':
-      return '📚'
+      return BookOpen
     case 'discussion':
-      return '💬'
+      return MessageSquare
+    default:
+      return FileText
   }
 }
 
@@ -228,61 +231,6 @@ function getDeadlineLabel(date: Date): string {
   if (isToday(date)) return 'Today'
   if (isTomorrow(date)) return 'Tomorrow'
   return formatDistanceToNow(date, { addSuffix: true })
-}
-
-interface CourseCardProps {
-  course: Course
-  isSelected: boolean
-  onClick: () => void
-}
-
-function CourseCard({ course, isSelected, onClick }: CourseCardProps) {
-  // Count upcoming deadlines (not past)
-  const upcomingCount = course.upcomingDeadlines.filter(
-    deadline => isFuture(deadline.dueDate) || isToday(deadline.dueDate)
-  ).length
-  
-  return (
-    <div 
-      className={cn(
-        "cursor-pointer flex-shrink-0 w-64 rounded-lg overflow-hidden transition-all transform duration-200",
-        isSelected ? "scale-[1.03] shadow-xl" : "hover:scale-[1.03] hover:shadow-md"
-      )}
-      onClick={onClick}
-    >
-      <div className="h-2" style={{ backgroundColor: course.color }} />
-      <div className={cn(
-        "bg-white p-5",
-        isSelected && "ring-2 ring-offset-2",
-        isSelected && `ring-[${course.color}]`
-      )}>
-        <div className="flex flex-col h-full">
-          <h3 className="text-lg font-bold text-gray-900">{course.code}</h3>
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2 h-10">{course.name}</p>
-          
-          <div className="mt-auto space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Progress</span>
-              <span className="font-medium text-asu-maroon">{course.progress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
-              <div 
-                className="h-1.5 rounded-full" 
-                style={{ width: `${course.progress}%`, backgroundColor: course.color }}
-              />
-            </div>
-            
-            <div className="flex items-center gap-2 mt-2">
-              <BookOpen className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-600">
-                {upcomingCount} upcoming {upcomingCount === 1 ? 'deadline' : 'deadlines'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 interface DeadlineItemProps {
@@ -298,7 +246,10 @@ function DeadlineItem({ deadline, isPast = false }: DeadlineItemProps) {
     )}>
       <div className="flex items-start gap-3">
         <div className="p-2 rounded-full bg-gray-100 flex-shrink-0">
-          <span className="text-xl">{getDeadlineIcon(deadline.type)}</span>
+          {(() => {
+            const Icon = getDeadlineIcon(deadline.type);
+            return <Icon className="w-5 h-5 text-gray-700" />;
+          })()}
         </div>
         <div className="flex-1">
           <div className="flex items-start justify-between">
@@ -333,7 +284,7 @@ function DeadlineItem({ deadline, isPast = false }: DeadlineItemProps) {
               <span className={cn(
                 isPast ? "text-gray-500" : "text-gray-700"
               )}>
-                {format(deadline.dueDate, 'MMM d, h:mm a')}
+                <span suppressHydrationWarning>{format(deadline.dueDate, 'MMM d, h:mm a')}</span>
               </span>
             </div>
             {isPast && (
@@ -419,140 +370,185 @@ function DeadlineSection({ title, deadlines, isPast = false, isCollapsible = tru
 }
 
 export default function PreparationPage() {
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  
-  // Refs for course carousel scrolling
-  const coursesContainerRef = useRef<HTMLDivElement>(null)
-  
-  const handleScrollLeft = () => {
-    if (coursesContainerRef.current) {
-      coursesContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' })
-    }
-  }
-  
-  const handleScrollRight = () => {
-    if (coursesContainerRef.current) {
-      coursesContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' })
-    }
-  }
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(mockCourses[0].id);
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   
   // Get selected course
-  const selectedCourse = selectedCourseId
-    ? mockCourses.find(course => course.id === selectedCourseId)
-    : null
+  const selectedCourse = mockCourses.find(course => course.id === selectedCourseId) || mockCourses[0];
 
   // Prepare deadlines for display
   const getDeadlines = () => {
-    if (!selectedCourse) {
-      // If no course is selected, show deadlines from all courses with course info
-      return mockCourses.flatMap(course => 
-        course.upcomingDeadlines.map(deadline => ({
-          ...deadline,
-          courseName: course.name,
-          courseCode: course.code,
-          courseColor: course.color
-        }))
-      )
-    }
-    
-    // If course is selected, just return its deadlines (with course info)
+    // Only show deadlines for the selected course
     return selectedCourse.upcomingDeadlines.map(deadline => ({
       ...deadline,
       courseName: selectedCourse.name,
       courseCode: selectedCourse.code,
       courseColor: selectedCourse.color
-    }))
-  }
+    }));
+  };
   
-  const allDeadlines = getDeadlines()
+  const allDeadlines = getDeadlines();
   
+  // Apply document type filter if selected
+  const filteredDeadlines = selectedFilter 
+    ? allDeadlines.filter(deadline => deadline.type === selectedFilter)
+    : allDeadlines;
+
   // Split deadlines into upcoming and past
-  const upcomingDeadlines = allDeadlines
+  const upcomingDeadlines = filteredDeadlines
     .filter(deadline => isFuture(deadline.dueDate) || isToday(deadline.dueDate))
-    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
   
-  const pastDeadlines = allDeadlines
+  const pastDeadlines = filteredDeadlines
     .filter(deadline => isPast(deadline.dueDate) && !isToday(deadline.dueDate))
-    .sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime())
+    .sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime());
+    
+  // Get counts for each deadline type
+  const getTypeCount = (type: string) => {
+    return allDeadlines.filter(deadline => deadline.type === type).length;
+  };
   
+  const filterOptions = [
+    { value: 'assignment', label: 'Assignments', count: getTypeCount('assignment') },
+    { value: 'quiz', label: 'Quizzes', count: getTypeCount('quiz') },
+    { value: 'exam', label: 'Exams', count: getTypeCount('exam') },
+    { value: 'discussion', label: 'Discussions', count: getTypeCount('discussion') }
+  ];
+
   return (
     <div className="px-8 py-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Preparation Center</h1>
-      
-      {/* Course Carousel */}
+      {/* Course Tabs */}
       <div className="relative mb-8">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-800">Your Courses</h2>
-          <div className="flex gap-2">
-            <button 
-              onClick={handleScrollLeft}
-              className="p-2 rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={handleScrollRight}
-              className="p-2 rounded-full bg-white shadow-sm border border-gray-200 hover:bg-gray-50"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
         </div>
         
-        <div 
-          ref={coursesContainerRef}
-          className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {mockCourses.map(course => (
-            <CourseCard 
-              key={course.id}
-              course={course}
-              isSelected={selectedCourseId === course.id}
-              onClick={() => setSelectedCourseId(course.id === selectedCourseId ? null : course.id)}
-            />
-          ))}
-        </div>
-      </div>
-      
-      {/* Selected Course Info */}
-      {selectedCourse && (
-        <div className="mb-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-1 h-8 rounded-full" 
-                style={{ backgroundColor: selectedCourse.color }}
-              />
-              <h2 className="text-xl font-bold text-gray-900">{selectedCourse.code}</h2>
-              <h3 className="text-lg text-gray-700">{selectedCourse.name}</h3>
+        <div className="bg-white rounded-lg overflow-hidden shadow-md">
+          <div className="border-b border-gray-200">
+            <div className="flex overflow-x-auto">
+              {mockCourses.map(course => (
+                <button
+                  key={course.id}
+                  onClick={() => setSelectedCourseId(course.id)}
+                  className={cn(
+                    "px-6 py-3 font-medium text-sm whitespace-nowrap focus:outline-none transition-all duration-300",
+                    selectedCourseId === course.id 
+                      ? "border-b-2 text-gray-900 bg-gray-50" 
+                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  )}
+                  style={{ 
+                    borderColor: selectedCourseId === course.id ? course.color : 'transparent',
+                    borderBottomWidth: selectedCourseId === course.id ? '3px' : '0',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className="w-3 h-3 rounded-full" 
+                      style={{ backgroundColor: course.color }}
+                    />
+                    {course.code}
+                    {selectedCourseId === course.id && (
+                      <motion.div 
+                        layoutId="tab-highlight"
+                        className="absolute bottom-0 left-0 right-0 h-0.5"
+                        style={{ backgroundColor: course.color, height: '3px' }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                  </div>
+                </button>
+              ))}
             </div>
-            <button 
-              onClick={() => setSelectedCourseId(null)}
-              className="text-sm text-gray-600 hover:text-asu-maroon hover:underline"
-            >
-              Show all courses
-            </button>
+          </div>
+          
+          <div className="p-6">
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={selectedCourseId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div 
+                      className="w-1 h-8 rounded-full" 
+                      style={{ backgroundColor: selectedCourse.color }}
+                    />
+                    <h2 className="text-xl font-bold text-gray-900">{selectedCourse.name}</h2>
+                  </div>
+                  
+                  {/* Deadline Type Filter */}
+                  <div className="mb-6">
+                    <div className="flex items-center mb-2">
+                      <h3 className="text-sm font-semibold text-gray-600 mr-2">Filter:</h3>
+                    
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setSelectedFilter(null)}
+                        className={cn(
+                          "px-3 py-1.5 text-sm transition-colors rounded-md",
+                          selectedFilter === null
+                            ? "bg-asu-maroon text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        )}
+                      >
+                        All
+                      </button>
+                      
+                      {filterOptions.map(option => (
+                        <button
+                          key={option.value}
+                          onClick={() => setSelectedFilter(option.value)}
+                          className={cn(
+                            "px-3 py-1.5 text-sm transition-colors rounded-md",
+                            selectedFilter === option.value
+                              ? "bg-asu-maroon text-white"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+      
+            {/* Deadlines Section */}
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={selectedCourseId + "-deadlines"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+                className="space-y-6">
+                <DeadlineSection 
+                  title={selectedFilter 
+                    ? `Upcoming ${filterOptions.find(opt => opt.value === selectedFilter)?.label || ''}` 
+                    : "Upcoming Deadlines"} 
+                  deadlines={upcomingDeadlines}
+                  isCollapsible={false}
+                />
+                
+                <DeadlineSection 
+                  title={selectedFilter 
+                    ? `Past ${filterOptions.find(opt => opt.value === selectedFilter)?.label || ''}` 
+                    : "Past Deadlines"} 
+                  deadlines={pastDeadlines}
+                  isPast={true}
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
-      )}
-      
-      {/* Deadlines Section */}
-      <div className="space-y-6">
-        <DeadlineSection 
-          title="Upcoming Deadlines" 
-          deadlines={upcomingDeadlines}
-          isCollapsible={false}
-        />
-        
-        <DeadlineSection 
-          title="Past Deadlines" 
-          deadlines={pastDeadlines}
-          isPast={true}
-        />
       </div>
     </div>
-  )
+  );
 }
