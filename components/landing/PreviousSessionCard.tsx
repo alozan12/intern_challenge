@@ -1,6 +1,6 @@
 'use client'
 
-import { History, ArrowRight, BookOpen, HelpCircle, MessageSquare, CheckSquare } from 'lucide-react'
+import { History, ArrowRight, BookOpen, HelpCircle, MessageSquare, CheckSquare, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { CircleProgress } from '@/components/ui/CircleProgress'
@@ -18,67 +18,46 @@ export function PreviousSessionCard({
   lastTested,
   sessionId = "last-session"
 }: PreviousSessionCardProps) {
-  const [showAnswer, setShowAnswer] = useState(false);
-  
-  // Sample question from previous session
-  const question = "What is a binary search tree?";
-  const answer = "A binary search tree is a data structure where each node has at most two children, with all values in the left subtree less than the node's value and all values in the right subtree greater than the node's value.";
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 h-full">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 h-full flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between p-2 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-[#8C1D40]" />
           <h2 className="text-lg font-semibold text-gray-900">Previous Session</h2>
         </div>
-        <div className="text-xs text-[#8C1D40] hover:underline cursor-pointer flex items-center gap-1">
-          <History className="h-3 w-3" />
-          <span>View History</span>
+        <Link 
+          href="/history"
+          className="text-sm text-[#8C1D40] hover:underline"
+        >
+          View History
+        </Link>
+      </div>
+      
+      <div className="px-4 pt-2 pb-1">
+        {/* Main content */}
+        <div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-gray-800">Exam 2</h3>
+            {/* Time spent studying */}
+            <div className="bg-[#f9e5e5] text-[#8C1D40] px-2 py-0.5 rounded-md">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span className="font-medium text-sm">1.5 hrs</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-gray-600 text-sm">CSE 110</p>
         </div>
       </div>
       
-      <div className="flex flex-col">
-        {/* Level and course info */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="h-8 w-8 rounded-full bg-[#8C1D40] flex items-center justify-center text-white font-medium">
-            {level}
-          </div>
-          <span className="text-sm text-gray-700">CSE 110 · {lastTested}</span>
-        </div>
-        
-        {/* Question card */}
-        <div className="bg-gray-50 rounded-md p-3 border border-gray-200 mb-3">
-          <div className="flex gap-2">
-            <HelpCircle className="h-5 w-5 text-[#8C1D40] flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-900">{question}</p>
-          </div>
-        </div>
-        
-        {/* Actions */}
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => setShowAnswer(!showAnswer)}
-            className="text-sm font-medium text-[#8C1D40] hover:underline"
-          >
-            Show Answer
-          </button>
-          
-          <Link 
-            href={`/preparation/session/${sessionId}`}
-            className="flex items-center gap-1.5 px-3 py-2 bg-[#8C1D40] text-white rounded-md text-sm font-medium"
-          >
-            <MessageSquare className="h-4 w-4" />
-            <span>Continue Session</span>
-          </Link>
-        </div>
-        
-        {showAnswer && (
-          <div className="mt-3 bg-white p-3 rounded-md border border-gray-200">
-            <div className="flex gap-2">
-              <CheckSquare className="h-5 w-5 text-[#8C1D40] flex-shrink-0" />
-              <p className="text-sm text-gray-600">{answer}</p>
-            </div>
-          </div>
-        )}
+      {/* Continue button in a contained section */}
+      <div className="bg-gray-50 p-2 mt-auto">
+        <Link 
+          href={`/preparation/session/${sessionId}`}
+          className="flex items-center justify-center w-full px-3 py-1.5 bg-[#8C1D40] text-white rounded-md text-center text-sm font-medium"
+        >
+          Continue Session
+        </Link>
       </div>
     </div>
   )

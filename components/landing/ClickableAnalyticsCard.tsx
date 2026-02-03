@@ -72,24 +72,21 @@ export function ClickableAnalyticsCard() {
   const current = analytics[activeIndex]
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 h-full">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-0 h-full flex flex-col">
+      <div className="flex items-center justify-between p-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
-          <div className="p-1 bg-[#f9e5e5] rounded-md">
-            <BarChart2 className="w-5 h-5 text-[#8C1D40]" />
-          </div>
+          <BarChart2 className="w-5 h-5 text-[#8C1D40]" />
           <h2 className="text-lg font-semibold text-gray-900">Analytics</h2>
         </div>
         <Link 
           href="/analytics" 
-          className="text-xs text-[#8C1D40] hover:underline flex items-center gap-1"
+          className="text-sm text-[#8C1D40] hover:underline flex items-center gap-1"
         >
-          <BarChart className="h-3 w-3" />
           <span>View All</span>
         </Link>
       </div>
       
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-4 pt-3 pb-2 flex-grow">
         <button 
           onClick={handlePrevious} 
           className="p-1 rounded-full hover:bg-gray-100 active:bg-gray-200"
@@ -99,15 +96,15 @@ export function ClickableAnalyticsCard() {
           <ChevronLeft className="h-5 w-5 text-gray-600" />
         </button>
         
-        <div className="text-center flex-1 px-4">
+        <div className="text-center flex-1">
           <p className="text-sm text-gray-600">{current.title}</p>
-          <div className="text-3xl font-bold" style={{ color: current.color }}>
+          <div className="text-4xl font-bold" style={{ color: current.color }}>
             {current.value}
           </div>
           <p className="text-xs text-gray-500">{current.subtext}</p>
           
           {current.percentage !== undefined && (
-            <div className="mt-3">
+            <div className="mt-2">
               <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full rounded-full" 
@@ -132,7 +129,7 @@ export function ClickableAnalyticsCard() {
       </div>
       
       {/* Dots indicator */}
-      <div className="flex justify-center gap-1 mt-4">
+      <div className="flex justify-center gap-1 pb-3 mt-auto">
         {analytics.map((_, index) => (
           <button
             key={index}

@@ -121,24 +121,30 @@ const allDeadlines: Deadline[] = mockCourses.flatMap(course => course.upcomingDe
 
 export default function LandingPage() {
   return (
-    <div className="p-3">
+    <div className="p-4">
       {/* Page content without the greeting */}
-      <div className="mb-2">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
       </div>
       
-      <div className="flex flex-col lg:flex-row gap-3">
+      <div className="flex flex-col lg:flex-row gap-4 max-w-full overflow-hidden">
         {/* Left Section: Cards and AI Insights (66% width) */}
-        <section className="lg:w-2/3">
+        <section className="w-full lg:w-2/3">
           {/* Top cards - three columns */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
-            <ActivityStreak daysInARow={mockAnalytics.studyStreak} />
-            <ClickableAnalyticsCard />
-            <PreviousSessionCard 
-              level={mockAnalytics.level || 'N/A'} 
-              progress={mockAnalytics.levelProgress || 0} 
-              lastTested={mockAnalytics.lastTested || 'Never'} 
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+            <div className="h-[200px]">
+              <ActivityStreak daysInARow={mockAnalytics.studyStreak} />
+            </div>
+            <div className="h-[200px]">
+              <ClickableAnalyticsCard />
+            </div>
+            <div className="h-[200px]">
+              <PreviousSessionCard 
+                level={mockAnalytics.level || 'N/A'} 
+                progress={mockAnalytics.levelProgress || 0} 
+                lastTested={mockAnalytics.lastTested || 'Never'} 
+              />
+            </div>
           </div>
           
           {/* AI Insights */}
@@ -146,9 +152,9 @@ export default function LandingPage() {
         </section>
 
         {/* Right Section: Deadlines (33% width) */}
-        <aside className="lg:w-1/3">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Upcoming Deadlines</h2>
-          <div className="space-y-2">
+        <aside className="w-full lg:w-1/3">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4">Upcoming Deadlines</h2>
+          <div className="space-y-4">
             <DeadlinesSection courses={mockCourses} />
             <MiniCalendar deadlines={allDeadlines} />
           </div>
