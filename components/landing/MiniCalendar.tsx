@@ -61,9 +61,17 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
       </div>
 
       <div className="grid grid-cols-7 gap-0 mb-0.5">
-        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) => (
-          <div key={day} className="text-[0.65rem] font-medium text-gray-500 text-center py-0">
-            {day}
+        {[
+          { day: 'S', key: 'sun' }, 
+          { day: 'M', key: 'mon' }, 
+          { day: 'T', key: 'tue' }, 
+          { day: 'W', key: 'wed' }, 
+          { day: 'T', key: 'thu' }, 
+          { day: 'F', key: 'fri' }, 
+          { day: 'S', key: 'sat' }
+        ].map((item) => (
+          <div key={item.key} className="text-xs font-medium text-gray-500 text-center py-0">
+            {item.day}
           </div>
         ))}
       </div>
