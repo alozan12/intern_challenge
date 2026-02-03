@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "_design-system",
+    "node_modules",
+    ".next",
+    "out"
+  ]
+}

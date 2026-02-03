@@ -135,9 +135,9 @@ export default function LandingPage() {
             <ActivityStreak daysInARow={mockAnalytics.studyStreak} />
             <ClickableAnalyticsCard />
             <PreviousSessionCard 
-              level={mockAnalytics.level} 
-              progress={mockAnalytics.levelProgress} 
-              lastTested={mockAnalytics.lastTested} 
+              level={mockAnalytics.level || 'N/A'} 
+              progress={mockAnalytics.levelProgress || 0} 
+              lastTested={mockAnalytics.lastTested || 'Never'} 
             />
           </div>
           
