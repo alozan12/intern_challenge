@@ -420,7 +420,10 @@ export default function PreparationPage() {
       {/* Course Tabs */}
       <div className="relative mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Your Courses</h2>
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-8 bg-[#FFC627] rounded-sm"></div>
+            <h2 className="text-xl font-semibold text-gray-800">Your Courses</h2>
+          </div>
         </div>
         
         <div className="bg-white rounded-lg overflow-hidden shadow-md">
