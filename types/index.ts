@@ -1,3 +1,12 @@
+export interface QuizPerformance {
+  id: string
+  title: string
+  score: number
+  totalPoints: number
+  date: Date
+  weakAreas: string[]
+}
+
 export interface Course {
   id: string
   name: string
@@ -5,6 +14,9 @@ export interface Course {
   color: string
   upcomingDeadlines: Deadline[]
   progress: number
+  quizPerformance?: QuizPerformance[]
+  weakTopics?: string[]
+  upcomingTopics?: string[]
 }
 
 export interface Deadline {
@@ -99,5 +111,23 @@ export interface Summary extends StudyMaterial {
   content: {
     text: string
     keyPoints: string[]
+  }
+}
+
+export interface AIInsight {
+  id: string
+  title: string
+  description: string
+  duration: number // in minutes
+  type: 'review' | 'practice' | 'prepare' | 'strengthen'
+  courseId: string
+  courseName: string
+  courseCode: string
+  topic: string
+  deadline?: {
+    id: string
+    title: string
+    dueDate: Date
+    type: 'assignment' | 'quiz' | 'exam' | 'discussion'
   }
 }

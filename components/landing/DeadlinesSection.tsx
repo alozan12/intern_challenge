@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 
 interface DeadlinesSectionProps {
   courses: Course[]
+  showTitle?: boolean
 }
 
 // Helper function to get appropriate icon based on deadline type
@@ -33,8 +34,8 @@ function getDeadlineLabel(date: Date): string {
   return formatDistanceToNow(date, { addSuffix: true })
 }
 
-export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
-  // Extract all deadlines from all courses
+export function DeadlinesSection({ courses, showTitle = true }: DeadlinesSectionProps) {
+  // Extract all deadlines from all courses and sort by due date
   const allDeadlines = courses.flatMap(course => 
     course.upcomingDeadlines.map(deadline => ({
       ...deadline,
@@ -44,96 +45,29 @@ export function DeadlinesSection({ courses }: DeadlinesSectionProps) {
     }))
   ).sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
   
-  // State for filters
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCourse, setSelectedCourse] = useState<string | 'all'>('all')
-  const [selectedType, setSelectedType] = useState<Deadline['type'] | 'all'>('all')
-  
-  // Filter deadlines based on current filters
-  const filteredDeadlines = allDeadlines.filter(deadline => {
-    // Search filter
-    const matchesSearch = searchQuery === '' || 
-      deadline.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      deadline.courseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      deadline.courseCode.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // Course filter
-    const matchesCourse = selectedCourse === 'all' || deadline.courseId === selectedCourse;
-    
-    // Type filter
-    const matchesType = selectedType === 'all' || deadline.type === selectedType;
-    
-    return matchesSearch && matchesCourse && matchesType;
-  });
-
-  // Get unique list of courses for dropdown
-  const uniqueCourses = courses.map(course => ({
-    id: course.id,
-    name: course.name,
-    code: course.code
-  }));
+  // Show all deadlines without filtering
+  const filteredDeadlines = allDeadlines;
   
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Filters section */}
-      <div className="p-3 border-b border-gray-250">
-        <div className="flex flex-col gap-2">
-          {/* Search input */}
-          <div className="w-full relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-              <Search className="w-3 h-3 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search deadlines..."
-              className="w-full pl-8 pr-2 py-1 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
-            />
-          </div>
-          
-          {/* Filters dropdown */}
-          <div className="flex flex-wrap items-center gap-1 justify-between">
-            {/* Course filter */}
-            <div className="flex items-center gap-2">
-              <label htmlFor="course-filter" className="text-xs font-medium text-gray-700 whitespace-nowrap">Course:</label>
-              <select
-                id="course-filter"
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value === 'all' ? 'all' : e.target.value)}
-                className="border border-gray-300 rounded-md py-0.5 pl-1 pr-6 text-xs focus:outline-none focus:ring-1 focus:ring-asu-maroon/50 focus:border-asu-maroon"
-              >
-                <option value="all">All Courses</option>
-                {uniqueCourses.map(course => (
-                  <option key={course.id} value={course.id}>
-                    {course.code}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            {/* Type filter */}
-            <div className="flex items-center gap-2">
-              <label htmlFor="type-filter" className="text-xs font-medium text-gray-700 whitespace-nowrap">Type:</label>
-              <select
-                id="type-filter"
-                value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value === 'all' ? 'all' : e.target.value as Deadline['type'])}
-                className="border border-gray-300 rounded-md py-0.5 pl-1 pr-6 text-xs focus:outline-none focus:ring-1 focus:ring-asu-maroon/50 focus:border-asu-maroon"
-              >
-                <option value="all">All Types</option>
-                <option value="assignment">Assignments</option>
-                <option value="quiz">Quizzes</option>
-                <option value="exam">Exams</option>
-                <option value="discussion">Discussions</option>
-              </select>
-            </div>
-          </div>
+    <div className={showTitle ? "bg-white rounded-lg shadow-sm border border-gray-200" : ""}>
+      {showTitle && (
+        <div className="p-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Deadlines</h2>
         </div>
+      )}
+      {/* View All link */}
+      <div className="px-4 py-2 border-b border-gray-200 flex justify-end">
+        <Link 
+          href="/preparation"
+          className="text-xs text-asu-maroon hover:underline flex items-center gap-1"
+        >
+          View All
+          <ArrowRight className="w-3 h-3" />
+        </Link>
       </div>
       
       {/* Deadlines list */}
-      <div className="divide-y divide-gray-100 max-h-[180px] overflow-y-auto scrollbar-thin">
+      <div className="divide-y divide-gray-100 max-h-[380px] overflow-y-auto scrollbar-thin">
         {filteredDeadlines.length > 0 ? (
           filteredDeadlines.map((deadline) => (
             <div key={deadline.id} className="p-2 hover:bg-gray-50 transition-colors">
