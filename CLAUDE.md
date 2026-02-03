@@ -132,7 +132,7 @@ npm test
 - **Supportive Analytics**: Provides actionable next steps (no risk labeling)
 - **Student Agency**: Recommends rather than commands
 - **Privacy & Transparency**: Minimal data use with visible explanations
-
+ 
 ## Implementation Scope
 - Student-facing Canvas app
 - Course-aware AI coaching
