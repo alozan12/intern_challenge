@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Play, Clock, BookOpen, Brain, AlertTriangle, TrendingUp, Calendar, Sparkles, Target, ArrowRight } from 'lucide-react'
+import { Play, Clock, BookOpen, Brain, AlertTriangle, TrendingUp, Calendar, Sparkles, Target, ArrowRight, RefreshCw } from 'lucide-react'
 import { AIInsight } from '@/types'
 import Link from 'next/link'
 
 export function AIInsights() {
-  const [insights, setInsights] = useState<AIInsight[]>([
+  // All possible insights
+  const allInsights: AIInsight[] = [
     {
       id: '1',
       title: 'Review Binary Search Trees',
@@ -69,7 +70,27 @@ export function AIInsights() {
         type: 'assignment'
       }
     }
-  ])
+  ];
+  
+  // Function to get 2 random insights
+  const getRandomInsights = () => {
+    // Sort by deadline proximity first (prioritize closer deadlines)
+    const sorted = [...allInsights].sort((a, b) => {
+      const aDate = a.deadline?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const bDate = b.deadline?.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      return aDate.getTime() - bDate.getTime();
+    });
+    
+    // Take the first 2 insights
+    return sorted.slice(0, 2);
+  };
+  
+  const [insights, setInsights] = useState<AIInsight[]>(getRandomInsights());
+  
+  // Function to regenerate insights
+  const regenerateInsights = () => {
+    setInsights(getRandomInsights());
+  };
 
   // Function to get icon based on insight type
   const getIcon = (type: AIInsight['type']) => {
@@ -98,23 +119,33 @@ export function AIInsights() {
   
   return (
     <div className="bg-[#FFF8E8] rounded-lg shadow-sm border border-[#FFC627]/30 p-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="p-1 bg-[#FFC627]/20 rounded-md">
             <Brain className="w-5 h-5 text-[#8C1D40]" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900">AI Insights</h2>
         </div>
-        <Link 
-          href="/insights"
-          className="text-sm text-[#8C1D40] hover:underline flex items-center gap-1"
-        >
-          <span>View All</span>
-          <ArrowRight className="h-3 w-3" />
-        </Link>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={regenerateInsights}
+            className="text-[#8C1D40] p-1.5 rounded-full hover:bg-[#f9e5e5] border border-[#8C1D40]/30"
+            aria-label="Regenerate insights"
+            title="Refresh recommendations"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+          </button>
+          <Link 
+            href="/insights"
+            className="text-sm text-[#8C1D40] hover:underline flex items-center gap-1"
+          >
+            <span>View All</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
       
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-gray-600 mb-3">
         Personalized recommendations based on your academic performance and upcoming deadlines
       </p>
       

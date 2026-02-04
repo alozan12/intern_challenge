@@ -16,7 +16,31 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
+  // Show only 2 weeks at a time
+  // By default show first 2 weeks, or if currentDay is after first 2 weeks, show last 2 weeks
+  const firstTwoWeeksEnd = new Date(monthStart)
+  firstTwoWeeksEnd.setDate(firstTwoWeeksEnd.getDate() + 13) // 14 days (2 weeks) from start
+  
+  // Check if today is after the first 2 weeks
+  const today = new Date()
+  const showSecondHalf = isToday(today) && today > firstTwoWeeksEnd && isSameMonth(today, currentMonth)
+  
+  let periodStart, periodEnd
+  if (showSecondHalf) {
+    // Show the second half of the month (last 2 weeks)
+    const daysInMonth = monthEnd.getDate()
+    // Start from the midpoint or 2 weeks before end, whichever gives exactly 2 weeks
+    periodStart = new Date(monthStart)
+    periodStart.setDate(Math.max(15, daysInMonth - 13))
+    periodEnd = monthEnd
+  } else {
+    // Show first 2 weeks
+    periodStart = monthStart
+    periodEnd = firstTwoWeeksEnd
+  }
+  
+  // Get days for the 2 week period
+  const days = eachDayOfInterval({ start: periodStart, end: periodEnd })
 
   const handlePreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1))
@@ -32,11 +56,12 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
     )
   }
 
+  // Calculate empty days at the start of the month for proper grid alignment
   const startingDayOfWeek = monthStart.getDay()
   const emptyDays = Array.from({ length: startingDayOfWeek }, (_, i) => i)
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+    <div className="rounded-lg p-1">
       <div className="flex items-center justify-between mb-1">
         <h3 className="text-xs font-semibold text-gray-700">Calendar</h3>
         <div className="flex items-center gap-2">
@@ -76,11 +101,10 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-0">
+      <div className="grid grid-cols-7 gap-0">  
         {emptyDays.map((_, index) => (
           <div key={`empty-${index}`} className="aspect-square" />
         ))}
-        
         {days.map((day) => {
           const dayDeadlines = getDeadlinesForDay(day)
           const hasDeadlines = dayDeadlines.length > 0
