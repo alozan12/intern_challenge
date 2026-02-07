@@ -76,7 +76,7 @@ export interface ChatMessage {
 
 export interface StudyMaterial {
   id: string
-  type: 'flashcards' | 'quiz' | 'summary' | 'outline' | 'practice_problems'
+  type: 'flashcards' | 'quiz' | 'summary' | 'outline' | 'practice_problems' | 'music'
   title: string
   content: any // This will vary based on type
   createdAt: Date
@@ -111,6 +111,21 @@ export interface Summary extends StudyMaterial {
   content: {
     text: string
     keyPoints: string[]
+  }
+}
+
+export interface MusicSet extends StudyMaterial {
+  type: 'music'
+  content: {
+    genre: string
+    tracks: Array<{
+      id: string
+      title: string
+      artist: string
+      duration: number
+      genre: string
+      src: string
+    }>
   }
 }
 
