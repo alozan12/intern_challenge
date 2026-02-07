@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Plus, X, FileText, Brain, List, Lightbulb, HelpCircle, Filter, AlertCircle, BookOpen, ChevronDown } from 'lucide-react'
+import { Plus, X, FileText, Brain, Lightbulb, HelpCircle, Filter, AlertCircle, BookOpen, ChevronDown, Music } from 'lucide-react'
 import { StudyMaterial } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
+import { MultipleChoiceQuiz } from '@/components/study-materials/MultipleChoiceQuiz'
+import { FlashcardSet } from '@/components/study-materials/FlashcardSet'
+import { MusicPlayer } from '@/components/study-materials/MusicPlayer'
+import { useViewMode } from '@/context/ViewModeContext'
 
 interface RightPanelProps {
   courseId: string
@@ -20,6 +24,7 @@ interface StudyOption {
 }
 
 type ContentFocus = 'all' | 'knowledge_gaps' | 'specific_sections'
+type MusicGenreType = 'rap' | 'pop' | 'opera' | 'jazz' | 'rock' | 'retro'
 
 interface ContentFocusOption {
   value: ContentFocus
@@ -44,25 +49,11 @@ const studyOptions: StudyOption[] = [
     color: 'text-green-600 bg-green-50 hover:bg-green-100'
   },
   {
-    type: 'summary',
-    label: 'Study Summary',
-    description: 'Get a concise summary of key concepts',
-    icon: <Brain className="w-5 h-5" />,
+    type: 'music',
+    label: 'Study Music',
+    description: 'Generate focus music based on your preferences',
+    icon: <Music className="w-5 h-5" />,
     color: 'text-purple-600 bg-purple-50 hover:bg-purple-100'
-  },
-  {
-    type: 'outline',
-    label: 'Study Outline',
-    description: 'Create a structured outline of topics',
-    icon: <List className="w-5 h-5" />,
-    color: 'text-orange-600 bg-orange-50 hover:bg-orange-100'
-  },
-  {
-    type: 'practice_problems',
-    label: 'Practice Problems',
-    description: 'Generate practice problems with solutions',
-    icon: <Lightbulb className="w-5 h-5" />,
-    color: 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100'
   }
 ]
 
@@ -74,7 +65,12 @@ export function RightPanel({ courseId }: RightPanelProps) {
   const [showFocusDropdown, setShowFocusDropdown] = useState(false)
   const [showSectionsDropdown, setShowSectionsDropdown] = useState(false)
   const [specificSections, setSpecificSections] = useState<string[]>([])
+  const [selectedGenre, setSelectedGenre] = useState<MusicGenreType>('pop')
   const [selectedMaterialType, setSelectedMaterialType] = useState<StudyMaterial['type'] | null>(null)
+  const [showQuizInterface, setShowQuizInterface] = useState(false)
+  const [showFlashcardInterface, setShowFlashcardInterface] = useState(false)
+  const [showMusicInterface, setShowMusicInterface] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   
   const dropdownRef = useRef<HTMLDivElement>(null)
   
@@ -136,14 +132,237 @@ export function RightPanel({ courseId }: RightPanelProps) {
       focusLabel = ` (${specificSections.length} Sections)`;
     }
     
+    // For music, add genre info to the label
+    if (type === 'music') {
+      focusLabel += ` (${selectedGenre.charAt(0).toUpperCase() + selectedGenre.slice(1)})`;
+    }
+
+    let content: any = {
+      contentFocus,
+      specificSections: contentFocus === 'specific_sections' ? specificSections : []
+    }
+
+    // Generate specific content based on material type
+    if (type === 'quiz') {
+      content = {
+        ...content,
+        questions: [
+          {
+            id: '1',
+            question: 'What is the primary function of the hippocampus in the brain?',
+            options: [
+              'Regulating body temperature',
+              'Processing visual information',
+              'Memory formation and retrieval',
+              'Controlling motor functions'
+            ],
+            correctAnswer: 2,
+            explanation: 'The hippocampus is crucial for forming new memories and retrieving existing ones. It plays a key role in converting short-term memories to long-term storage and spatial navigation.'
+          },
+          {
+            id: '2',
+            question: 'Which psychological approach emphasizes the role of unconscious thoughts and childhood experiences?',
+            options: [
+              'Behaviorism',
+              'Cognitive Psychology',
+              'Psychoanalytic Theory',
+              'Humanistic Psychology'
+            ],
+            correctAnswer: 2,
+            explanation: 'Psychoanalytic theory, developed by Freud, focuses on unconscious drives, repressed memories, and early childhood experiences as primary influences on behavior and personality.'
+          },
+          {
+            id: '3',
+            question: 'In classical conditioning, what is the unconditioned response (UCR)?',
+            options: [
+              'A learned response to a conditioned stimulus',
+              'A neutral stimulus before conditioning',
+              'A natural, automatic response to an unconditioned stimulus',
+              'The process of learning new associations'
+            ],
+            correctAnswer: 2,
+            explanation: 'The unconditioned response (UCR) is an automatic, natural reaction that occurs in response to an unconditioned stimulus without any prior learning or conditioning required.'
+          },
+          {
+            id: '4',
+            question: 'What is the primary function of dopamine in the brain?',
+            options: [
+              'Pain regulation',
+              'Reward and motivation',
+              'Visual processing',
+              'Language production'
+            ],
+            correctAnswer: 1,
+            explanation: 'Dopamine is primarily involved in reward-motivated behavior and plays a crucial role in the brain\'s reward system, affecting motivation, pleasure, and reinforcement learning.'
+          },
+          {
+            id: '5',
+            question: 'Which of the following is NOT a defense mechanism according to psychoanalytic theory?',
+            options: [
+              'Repression',
+              'Projection',
+              'Cognitive restructuring',
+              'Displacement'
+            ],
+            correctAnswer: 2,
+            explanation: 'Cognitive restructuring is a technique from cognitive-behavioral therapy, not a defense mechanism from psychoanalytic theory. The others are classic defense mechanisms described by Freud.'
+          },
+          {
+            id: '6',
+            question: 'What is the main difference between short-term and long-term memory?',
+            options: [
+              'Type of information stored',
+              'Storage capacity and duration',
+              'Location in the brain',
+              'Age of formation'
+            ],
+            correctAnswer: 1,
+            explanation: 'The main difference between short-term and long-term memory is their storage capacity and duration. Short-term memory has limited capacity and lasts only seconds to minutes, while long-term memory has vast capacity and can last a lifetime.'
+          },
+          {
+            id: '7',
+            question: 'What is confirmation bias?',
+            options: [
+              'The tendency to be overconfident in one\'s abilities',
+              'The tendency to seek information that confirms existing beliefs',
+              'The bias to remember confirmed predictions better than failed ones',
+              'The bias to overestimate how much others agree with you'
+            ],
+            correctAnswer: 1,
+            explanation: 'Confirmation bias is the tendency to search for, interpret, favor, and recall information in a way that confirms one\'s preexisting beliefs while giving less consideration to alternative possibilities.'
+          },
+          {
+            id: '8',
+            question: 'Which part of the brain is primarily responsible for emotional regulation?',
+            options: [
+              'Cerebellum',
+              'Amygdala',
+              'Occipital lobe',
+              'Motor cortex'
+            ],
+            correctAnswer: 1,
+            explanation: 'The amygdala plays a key role in processing emotions, especially fear and threat detection, and is central to emotional regulation and emotional learning.'
+          },
+          {
+            id: '9',
+            question: 'What is neuroplasticity?',
+            options: [
+              'The brain\'s ability to grow new neurons',
+              'The brain\'s ability to form new neural connections and reorganize',
+              'The brain\'s resilience to physical damage',
+              'The brain\'s ability to process multiple inputs simultaneously'
+            ],
+            correctAnswer: 1,
+            explanation: 'Neuroplasticity refers to the brain\'s ability to change continuously throughout life, forming new neural connections and reorganizing in response to learning, experience, injury, or disease.'
+          },
+          {
+            id: '10',
+            question: 'Which theory is associated with B.F. Skinner?',
+            options: [
+              'Cognitive development',
+              'Psychoanalytic theory',
+              'Operant conditioning',
+              'Social learning theory'
+            ],
+            correctAnswer: 2,
+            explanation: 'B.F. Skinner is most closely associated with operant conditioning, a type of learning where behavior is controlled by consequences, either reinforcement or punishment.'
+          }
+        ]
+      }
+    } else if (type === 'flashcards') {
+      content = {
+        ...content,
+        cards: [
+          {
+            id: '1',
+            front: 'Hippocampus',
+            back: 'A region of the brain crucial for memory formation, consolidation, and spatial navigation. It converts short-term memories into long-term memories and is part of the limbic system.'
+          },
+          {
+            id: '2',
+            front: 'Classical Conditioning',
+            back: 'A learning process where a neutral stimulus becomes associated with a meaningful stimulus, eventually triggering a similar response. Discovered by Ivan Pavlov through his experiments with dogs.'
+          },
+          {
+            id: '3',
+            front: 'Neuroplasticity',
+            back: 'The brain\'s ability to reorganize and form new neural connections throughout life. This allows the brain to adapt to new experiences, learn new skills, and recover from injuries.'
+          },
+          {
+            id: '4',
+            front: 'Cognitive Dissonance',
+            back: 'The mental discomfort experienced when holding contradictory beliefs, values, or attitudes simultaneously. People are motivated to reduce this dissonance by changing their beliefs or behaviors.'
+          },
+          {
+            id: '5',
+            front: 'Operant Conditioning',
+            back: 'A learning method where behaviors are modified through consequences such as rewards and punishments. Developed by B.F. Skinner, it explains how voluntary behaviors are strengthened or weakened.'
+          },
+          {
+            id: '6',
+            front: 'Dopamine',
+            back: 'A neurotransmitter associated with pleasure, reward, and motivation. It plays a key role in the brain\'s reward system and is involved in addiction, movement, and emotional regulation.'
+          },
+          {
+            id: '7',
+            front: 'Confirmation Bias',
+            back: 'The tendency to search for, interpret, favor, and recall information in a way that confirms one\'s preexisting beliefs while giving less consideration to alternative possibilities.'
+          },
+          {
+            id: '8',
+            front: 'Working Memory',
+            back: 'The cognitive system responsible for temporarily holding information available for processing, manipulation, and decision-making. Has limited capacity and duration.'
+          },
+          {
+            id: '9',
+            front: 'Attribution Theory',
+            back: 'Describes how individuals explain the causes of behavior and events, either attributing them to internal factors (personality, ability) or external factors (situation, luck).'
+          },
+          {
+            id: '10',
+            front: 'Serotonin',
+            back: 'A neurotransmitter that regulates mood, social behavior, appetite, sleep, memory, and sexual desire. Often associated with feelings of well-being and happiness.'
+          }
+        ]
+      }
+    } else if (type === 'music') {
+      content = {
+        ...content,
+        genre: selectedGenre, // Use the selected genre
+        tracks: [
+          {
+            id: '1',
+            title: 'Study Flow Beats',
+            artist: 'AI Generated',
+            duration: 180,
+            genre: 'rap',
+            src: '/mock_assets/pythagorean.mp3'
+          },
+          {
+            id: '2',
+            title: 'Focus Pop Anthem',
+            artist: 'Study Sounds',
+            duration: 240,
+            genre: 'pop',
+            src: '/mock_assets/pythagorean.mp3'
+          },
+          {
+            id: '3',
+            title: 'Rock Your Studies',
+            artist: 'Concentration Co.',
+            duration: 200,
+            genre: 'rock',
+            src: '/mock_assets/pythagorean.mp3'
+          }
+        ]
+      }
+    }
+    
     const newMaterial: StudyMaterial = {
       id: Date.now().toString(),
       type,
       title: `${studyOptions.find(o => o.type === type)?.label}${focusLabel} - ${format(new Date(), 'MMM d')}`,  // This is for material creation, not display
-      content: {
-        contentFocus,
-        specificSections: contentFocus === 'specific_sections' ? specificSections : []
-      },
+      content,
       createdAt: new Date()
     }
     
@@ -152,6 +371,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
     setSelectedMaterialType(null)
     setContentFocus('all')
     setSpecificSections([])
+    setSelectedGenre('pop')
     setShowFocusDropdown(false)
     setShowSectionsDropdown(false)
   }
@@ -171,6 +391,50 @@ export function RightPanel({ courseId }: RightPanelProps) {
     }
   }
 
+  const handleMaterialClick = (material: StudyMaterial) => {
+    setSelectedMaterial(material.id)
+    
+    if (material.type === 'quiz') {
+      setShowQuizInterface(true)
+      setShowFlashcardInterface(false)
+      setShowMusicInterface(false)
+    } else if (material.type === 'flashcards') {
+      setShowFlashcardInterface(true)
+      setShowQuizInterface(false)
+      setShowMusicInterface(false)
+    } else if (material.type === 'music') {
+      setShowMusicInterface(true)
+      setShowQuizInterface(false)
+      setShowFlashcardInterface(false)
+    } else {
+      setShowQuizInterface(false)
+      setShowFlashcardInterface(false)
+      setShowMusicInterface(false)
+    }
+  }
+
+  const handleCloseQuiz = () => {
+    setShowQuizInterface(false)
+    setSelectedMaterial(null)
+    setIsFullscreen(false)
+  }
+
+  const handleCloseFlashcards = () => {
+    setShowFlashcardInterface(false)
+    setSelectedMaterial(null)
+    setIsFullscreen(false)
+  }
+
+  const handleCloseMusic = () => {
+    setShowMusicInterface(false)
+    setSelectedMaterial(null)
+    setIsFullscreen(false)
+  }
+
+  const handleToggleFullscreen = () => {
+    setIsFullscreen(prev => !prev)
+  }
+
   const getMaterialIcon = (type: StudyMaterial['type']) => {
     return studyOptions.find(o => o.type === type)?.icon
   }
@@ -180,12 +444,69 @@ export function RightPanel({ courseId }: RightPanelProps) {
     return option?.color.split(' ')[0] || 'text-gray-600'
   }
 
+  // Show quiz interface if a quiz is selected
+  if (showQuizInterface && selectedMaterial) {
+    const quizMaterial = createdMaterials.find(m => m.id === selectedMaterial && m.type === 'quiz')
+    if (quizMaterial) {
+      return (
+        <MultipleChoiceQuiz
+          quiz={quizMaterial as any}
+          onClose={handleCloseQuiz}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={handleToggleFullscreen}
+          onComplete={(results) => {
+            console.log('Quiz completed:', results)
+            // Here you could save results or show additional feedback
+          }}
+        />
+      )
+    }
+  }
+
+  // Show flashcard interface if flashcards are selected
+  if (showFlashcardInterface && selectedMaterial) {
+    const flashcardMaterial = createdMaterials.find(m => m.id === selectedMaterial && m.type === 'flashcards')
+    if (flashcardMaterial) {
+      return (
+        <FlashcardSet
+          flashcardSet={flashcardMaterial as any}
+          onClose={handleCloseFlashcards}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={handleToggleFullscreen}
+          onComplete={(results) => {
+            console.log('Flashcards completed:', results)
+            // Here you could save results or show additional feedback
+          }}
+        />
+      )
+    }
+  }
+
+  // Show music interface if music is selected
+  if (showMusicInterface && selectedMaterial) {
+    const musicMaterial = createdMaterials.find(m => m.id === selectedMaterial && m.type === 'music')
+    if (musicMaterial) {
+      return (
+        <MusicPlayer
+          musicSet={musicMaterial as any}
+          onClose={handleCloseMusic}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={handleToggleFullscreen}
+        />
+      )
+    }
+  }
+
+  const { viewMode } = useViewMode();
+
   return (
-    <div className="flex flex-col h-full">
+    <div className={cn("flex flex-col h-full", viewMode === 'compact' ? 'text-sm' : '')}>
       {/* Header */}
       <div className="border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Study Materials</h2>
+          <div className="flex items-center space-x-2">
+            <h2 className="text-lg font-semibold text-gray-900">Study Materials</h2>
+          </div>
           <button
             onClick={() => setShowOptions(!showOptions)}
             className={cn(
@@ -307,6 +628,36 @@ export function RightPanel({ courseId }: RightPanelProps) {
               )}
             </div>
             
+            {/* Music Genre Selection (only when Study Music is selected) */}
+            {selectedMaterialType === 'music' && (
+              <div className="mt-2">
+                <div className="text-xs text-gray-500 mb-1">Music Genre</div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: 'rap', label: 'Rap' },
+                    { value: 'pop', label: 'Pop' },
+                    { value: 'opera', label: 'Opera' },
+                    { value: 'jazz', label: 'Jazz' },
+                    { value: 'rock', label: 'Rock' },
+                    { value: 'retro', label: 'Retro' }
+                  ].map((genre) => (
+                    <button
+                      key={genre.value}
+                      onClick={() => setSelectedGenre(genre.value as MusicGenreType)}
+                      className={cn(
+                        "px-3 py-1 text-sm rounded-full transition-colors",
+                        selectedGenre === genre.value
+                          ? "bg-purple-100 text-purple-700 border border-purple-300"
+                          : "bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200"
+                      )}
+                    >
+                      {genre.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {/* Specific Sections Dropdown (only when 'specific_sections' is selected) */}
             {contentFocus === 'specific_sections' && (
               <div className="relative">
@@ -374,7 +725,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
             {createdMaterials.map((material) => (
               <div
                 key={material.id}
-                onClick={() => setSelectedMaterial(material.id)}
+                onClick={() => handleMaterialClick(material)}
                 className={cn(
                   "p-3 rounded-lg border cursor-pointer transition-all group",
                   selectedMaterial === material.id

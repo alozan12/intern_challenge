@@ -5,6 +5,7 @@ import { Send, Paperclip, Mic } from 'lucide-react'
 import { ChatMessage } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { useViewMode } from '@/context/ViewModeContext'
 
 interface ChatPanelProps {
   courseId: string
@@ -25,6 +26,7 @@ const getCourseInfo = (courseId: string) => {
 
 export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
   const courseInfo = getCourseInfo(courseId)
+  const { viewMode } = useViewMode()
   
   // Initialize messages with course-specific content
   const createInitialMessage = () => ({
@@ -86,13 +88,13 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={cn("flex flex-col h-full", viewMode === 'compact' ? 'text-sm' : '')}>
       {/* Header */}
       <div className="border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">AI Study Coach</h2>
-            <p className="text-sm text-gray-600">Ask questions about your course content</p>
+            <h2 className={cn("font-semibold text-gray-900", viewMode === 'compact' ? 'text-base' : 'text-lg')}>AI Study Coach</h2>
+            <p className={cn("text-gray-600", viewMode === 'compact' ? 'text-xs' : 'text-sm')}>Ask questions about your course content</p>
           </div>
           <button 
             onClick={() => {
@@ -109,7 +111,10 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
               console.log('New initial message', newInitialMessage);
               setMessages([newInitialMessage]);
             }}
-            className="px-3 py-1.5 text-sm bg-asu-maroon text-white rounded-md hover:bg-red-900 transition-colors flex items-center gap-1"
+            className={cn(
+              "text-white rounded-md hover:bg-red-900 transition-colors flex items-center gap-1 bg-asu-maroon",
+              viewMode === 'compact' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
+            )}
           >
             Start New Session
           </button>
@@ -118,7 +123,7 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="space-y-4">
+        <div className={cn("space-y-4", viewMode === 'compact' ? 'space-y-2' : '')}>
           {messages.map((message) => (
             <div
               key={message.id}
@@ -129,15 +134,16 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
             >
               <div
                 className={cn(
-                  "max-w-[80%] rounded-lg px-4 py-3",
+                  "max-w-[80%] rounded-lg",
+                  viewMode === 'compact' ? 'px-3 py-2' : 'px-4 py-3',
                   message.role === 'user'
                     ? "bg-asu-maroon text-white"
                     : "bg-gray-100 text-gray-900"
                 )}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <p className={cn("whitespace-pre-wrap", viewMode === 'compact' ? 'text-xs' : 'text-sm')}>{message.content}</p>
                 <p className={cn(
-                  "text-xs mt-1",
+                  viewMode === 'compact' ? 'text-[10px] mt-0.5' : 'text-xs mt-1',
                   message.role === 'user' ? "text-red-200" : "text-gray-500"
                 )}>
                   <span suppressHydrationWarning>

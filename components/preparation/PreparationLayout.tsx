@@ -29,7 +29,8 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
   const [rightPanelWidth, setRightPanelWidth] = useState(25)
   const [isResizingLeft, setIsResizingLeft] = useState(false)
   const [isResizingRight, setIsResizingRight] = useState(false)
-  const [isLeftPanelMinimized, setIsLeftPanelMinimized] = useState(false)
+  // Left panel is always expanded
+  const isLeftPanelMinimized = false
   
   // Find background color for this course
   const getCourseColor = () => {
@@ -85,9 +86,7 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
     }
   }, [isResizingLeft, isResizingRight])
 
-  const middlePanelWidth = isLeftPanelMinimized 
-    ? 100 - 3 - rightPanelWidth  // 3% for minimized panel
-    : 100 - leftPanelWidth - rightPanelWidth
+  const middlePanelWidth = 100 - leftPanelWidth - rightPanelWidth
 
   return (
     <div 
@@ -95,37 +94,21 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
       className="flex h-full bg-gray-50 relative overflow-hidden"
     >
       <div className="w-full absolute top-0 h-1" style={{ backgroundColor: courseColor }}></div>
-        {/* Left Panel */}
+        {/* Left Panel - Always expanded */}
         <div 
-          style={{ width: isLeftPanelMinimized ? '3%' : `${leftPanelWidth}%` }}
+          style={{ width: `${leftPanelWidth}%` }}
           className="bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 relative"
         >
-          {isLeftPanelMinimized ? (
-            <div className="h-full flex items-center justify-center">
-              <button
-                onClick={() => setIsLeftPanelMinimized(false)}
-                className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-                title="Expand panel"
-              >
-                <PanelLeft className="w-5 h-5 text-gray-600" />
-              </button>
-            </div>
-          ) : (
-            <>
-              <LeftPanel courseId={courseId} />
-            </>
-          )}
+          <LeftPanel courseId={courseId} />
         </div>
 
-        {/* Left Resize Handle - only show when not minimized */}
-        {!isLeftPanelMinimized && (
-          <div
-            className="w-1 bg-gray-200 hover:bg-gray-300 cursor-col-resize transition-colors relative group flex-shrink-0"
-            onMouseDown={() => setIsResizingLeft(true)}
-          >
-            <div className="absolute inset-y-0 -left-1 -right-1 group-hover:bg-blue-500/10" />
-          </div>
-        )}
+        {/* Left Resize Handle */}
+        <div
+          className="w-1 bg-gray-200 hover:bg-gray-300 cursor-col-resize transition-colors relative group flex-shrink-0"
+          onMouseDown={() => setIsResizingLeft(true)}
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1 group-hover:bg-blue-500/10" />
+        </div>
 
         {/* Middle Panel (Chat) */}
         <div 

@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { Clock, Bell, MessageSquare, Users, X, PlayCircle, PauseCircle, RotateCcw, SunMedium } from 'lucide-react'
+import { Clock, Bell, MessageSquare, Users, X, PlayCircle, PauseCircle, RotateCcw, SunMedium, Menu, ChevronRight, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useViewMode } from '@/context/ViewModeContext'
+
+interface TopBarProps {
+  onToggleSidebar?: () => void;
+  isSidebarMinimized?: boolean;
+}
 
 // Pomodoro Timer Tool
 function PomodoroTool() {
@@ -321,9 +327,14 @@ function UsersTool() {
   )
 }
 
-export function TopBar() {
+export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}) {
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
+  const { viewMode, setViewMode } = useViewMode();
+  
+  // Sync state
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
   
   // Get current date and time-appropriate greeting (always calculate for the date)
   const { formattedDate, greeting } = getTimeBasedGreeting();
@@ -339,11 +350,51 @@ export function TopBar() {
   }
   
   const pageTitle = getPageTitle();
+
+  // Handle sync action
+  const handleSync = async () => {
+    setIsSyncing(true)
+    
+    // Mock sync process - in real app this would sync with Canvas API
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
+    setLastSyncTime(new Date())
+    setIsSyncing(false)
+  }
+
+  // Format last sync time
+  const formatLastSync = (date: Date | null) => {
+    if (!date) return 'Never synced'
+    
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
+    
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+    
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) return `${diffInHours}h ago`
+    
+    return date.toLocaleDateString()
+  }
   
   return (
     <div className="h-14 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-8 z-40 relative">
       <div className="flex items-center">
         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          {/* Toggle sidebar button - only show for Preparation Center */}
+          {pathname.startsWith('/preparation') && onToggleSidebar && (
+            <button 
+              onClick={onToggleSidebar}
+              className="p-1 mr-1 rounded-md hover:bg-gray-100 transition-colors"
+              title={isSidebarMinimized ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              {isSidebarMinimized ? 
+                <ChevronRight className="w-4 h-4 text-gray-500" /> : 
+                <Menu className="w-4 h-4 text-gray-500" />
+              }
+            </button>
+          )}
           {pageTitle} {isLandingPage && <SunMedium className="text-yellow-400 h-6 w-6" />}
         </h1>
         <p className="text-gray-500 ml-4">{formattedDate}</p>
@@ -353,6 +404,27 @@ export function TopBar() {
         <RemindersTool />
         <AIChatTool />
         <UsersTool />
+        {/* Sync Section */}
+        <div className="flex items-center ml-3">
+          <div className="h-6 w-px bg-gray-300 mx-2" />
+          <div className="text-xs text-gray-500">
+            <div>Last sync:</div>
+            <div className="font-medium">{formatLastSync(lastSyncTime)}</div>
+          </div>
+          <button
+            onClick={handleSync}
+            disabled={isSyncing}
+            className={cn(
+              "p-2 rounded-md transition-colors flex items-center gap-2 ml-2",
+              isSyncing 
+                ? "text-gray-400 cursor-not-allowed" 
+                : "text-gray-600 hover:bg-gray-100 hover:text-asu-maroon"
+            )}
+            title={isSyncing ? "Syncing..." : "Sync with Canvas"}
+          >
+            <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
+          </button>
+        </div>
       </div>
     </div>
   )

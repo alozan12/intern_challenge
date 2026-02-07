@@ -86,10 +86,18 @@ export function KnowledgeBaseTab({ courseId }: KnowledgeBaseTabProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
-  const toggleItem = (id: string) => {
+  const toggleItem = async (id: string) => {
+    // Update the items list with the toggled item
     setItems(items.map(item => 
       item.id === id ? { ...item, isSelected: !item.isSelected } : item
     ))
+    
+    // Trigger auto-save when an item is toggled
+    setIsSaving(true)
+    // Simulate API call to save selections
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setIsSaving(false)
+    setLastSaved(new Date())
   }
 
   const handleSave = async () => {
@@ -256,29 +264,18 @@ export function KnowledgeBaseTab({ courseId }: KnowledgeBaseTabProps) {
         ))}
       </div>
 
-      {/* Save Button at Bottom */}
+      {/* Auto-save Status Footer */}
       <div className="border-t border-gray-200 p-4 bg-gray-50">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-end">
           <div className="flex items-center gap-2">
-            {lastSaved && (
+            {isSaving ? (
+              <span className="text-xs text-gray-500">Saving...</span>
+            ) : lastSaved && (
               <span className="text-xs text-gray-500">
                 Last saved: <span suppressHydrationWarning>{format(lastSaved, 'h:mm a')}</span>
               </span>
             )}
           </div>
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
-              isSaving 
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-asu-maroon text-white hover:bg-red-900"
-            )}
-          >
-            <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save Knowledge Base'}
-          </button>
         </div>
       </div>
     </div>
