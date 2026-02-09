@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Check, X, ChevronRight, ChevronLeft, RotateCcw, Brain, BookOpen, Maximize2, Minimize2, Eye, Edit3 } from 'lucide-react'
+import { Check, X, ChevronRight, ChevronLeft, RotateCcw, Brain, BookOpen, Maximize2, Minimize2, Eye, Edit3, AlertTriangle } from 'lucide-react'
 import { FlashcardSet as FlashcardSetType } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -33,7 +33,9 @@ interface CardState {
   isFlipped: boolean
   userAnswer: string
   isAnswered: boolean
+  isSubmitting?: boolean
   feedback?: CardFeedback
+  error?: string
 }
 
 type StudyMode = 'study' | 'test'
@@ -80,39 +82,45 @@ const mockFlashcardData: FlashcardSetType = {
   }
 }
 
-// Mock AI evaluation function
-const mockAIEvaluate = (userAnswer: string, correctAnswer: string, term: string): CardFeedback => {
-  const userLower = userAnswer.toLowerCase().trim()
-  const correctLower = correctAnswer.toLowerCase()
-  
-  // Simple keyword matching for mock evaluation
-  const keyWords = correctLower.match(/\b\w+\b/g)?.filter(word => word.length > 3) || []
-  const matchedWords = keyWords.filter(word => userLower.includes(word))
-  const score = Math.min(100, Math.round((matchedWords.length / Math.max(keyWords.length, 1)) * 100))
-  
-  let feedback = ''
-  let isCorrect = false
-  
-  if (score >= 80) {
-    isCorrect = true
-    feedback = `Excellent! Your definition captures the key concepts well. You mentioned the important aspects of ${term}.`
-  } else if (score >= 60) {
-    isCorrect = true
-    feedback = `Good understanding! You got the main idea. Consider including more details about ${keyWords.slice(0, 2).join(' and ')}.`
-  } else if (score >= 40) {
-    feedback = `Partially correct. You're on the right track, but missing key concepts. Focus on ${keyWords.slice(0, 3).join(', ')}.`
-  } else if (userAnswer.trim().length > 0) {
-    feedback = `This doesn't quite match the definition. Review the key concepts: ${keyWords.slice(0, 3).join(', ')}. Try focusing on what ${term} actually does or means.`
-  } else {
-    feedback = `Please provide an answer to receive feedback.`
-  }
-  
-  return {
-    cardId: '',
-    userAnswer,
-    isCorrect,
-    aiScore: score,
-    aiExplanation: feedback
+// AI evaluation function that uses the CreateAI API
+const evaluateWithAI = async (userAnswer: string, correctAnswer: string, term: string): Promise<CardFeedback> => {
+  try {
+    const response = await fetch('/api/study/evaluate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userAnswer,
+        correctAnswer,
+        term
+      })
+    })
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`)
+    }
+    
+    const data = await response.json()
+    
+    return {
+      cardId: '',
+      userAnswer,
+      isCorrect: data.isCorrect,
+      aiScore: data.aiScore,
+      aiExplanation: data.aiExplanation
+    }
+  } catch (error) {
+    console.error('Error evaluating answer:', error)
+    
+    // Fallback in case API fails
+    return {
+      cardId: '',
+      userAnswer,
+      isCorrect: false,
+      aiScore: 0,
+      aiExplanation: 'Could not evaluate your answer. Please try again.'
+    }
   }
 }
 
@@ -129,7 +137,8 @@ export function FlashcardSet({
     flashcardSet.content.cards.map(() => ({
       isFlipped: false,
       userAnswer: '',
-      isAnswered: false
+      isAnswered: false,
+      isSubmitting: false
     }))
   )
   const [showResults, setShowResults] = useState(false)
@@ -148,7 +157,8 @@ export function FlashcardSet({
     setCardStates(flashcardSet.content.cards.map(() => ({
       isFlipped: false,
       userAnswer: '',
-      isAnswered: false
+      isAnswered: false,
+      isSubmitting: false
     })))
   }
 
@@ -162,19 +172,46 @@ export function FlashcardSet({
     }
   }
 
-  const handleAnswerSubmit = () => {
+  const handleAnswerSubmit = async () => {
     if (mode === 'test' && currentState.userAnswer.trim()) {
-      const feedback = mockAIEvaluate(currentState.userAnswer, currentCard.back, currentCard.front)
-      
+      // Show loading state
       setCardStates(prev => prev.map((state, index) => 
         index === currentCardIndex
           ? { 
               ...state, 
-              isAnswered: true, 
-              feedback: { ...feedback, cardId: currentCard.id } 
+              isSubmitting: true
             }
           : state
       ))
+      
+      try {
+        // Get feedback from AI
+        const feedback = await evaluateWithAI(currentState.userAnswer, currentCard.back, currentCard.front)
+        
+        setCardStates(prev => prev.map((state, index) => 
+          index === currentCardIndex
+            ? { 
+                ...state, 
+                isAnswered: true,
+                isSubmitting: false,
+                feedback: { ...feedback, cardId: currentCard.id } 
+              }
+            : state
+        ))
+      } catch (error) {
+        console.error('Error submitting answer:', error)
+        
+        // Handle error
+        setCardStates(prev => prev.map((state, index) => 
+          index === currentCardIndex
+            ? { 
+                ...state, 
+                isSubmitting: false,
+                error: 'Failed to evaluate answer. Please try again.' 
+              }
+            : state
+        ))
+      }
     }
   }
 
@@ -229,7 +266,8 @@ export function FlashcardSet({
     setCardStates(flashcardSet.content.cards.map(() => ({
       isFlipped: false,
       userAnswer: '',
-      isAnswered: false
+      isAnswered: false,
+      isSubmitting: false
     })))
     setShowResults(false)
   }
@@ -630,26 +668,57 @@ export function FlashcardSet({
                       <div className="mt-4 text-center">
                         <button
                           onClick={handleAnswerSubmit}
-                          disabled={!currentState.userAnswer.trim()}
+                          disabled={!currentState.userAnswer.trim() || currentState.isSubmitting}
                           className={cn(
-                            "px-6 py-3 rounded-lg font-medium transition-colors",
-                            currentState.userAnswer.trim()
-                              ? "bg-green-600 text-white hover:bg-green-700"
-                              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            "px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 justify-center",
+                            currentState.isSubmitting
+                              ? "bg-gray-400 text-white cursor-wait"
+                              : currentState.userAnswer.trim()
+                                ? "bg-green-600 text-white hover:bg-green-700"
+                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
                           )}
                         >
-                          Submit Answer
+                          {currentState.isSubmitting ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Evaluating...
+                            </>
+                          ) : (
+                            'Submit Answer'
+                          )}
                         </button>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  // Show feedback after submission
+                  // Show feedback after submission or error
                   <div className="flex flex-col h-full space-y-4 overflow-y-auto">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600 mb-2">Your answer:</p>
                       <p className="text-gray-900">{currentState.userAnswer}</p>
                     </div>
+                    
+                    {currentState.error && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="p-1 rounded-full bg-red-600">
+                            <AlertTriangle className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="font-semibold text-gray-900">
+                            Error
+                          </span>
+                        </div>
+                        <p className="text-sm text-red-800 mb-3">
+                          {currentState.error}
+                        </p>
+                        <button
+                          onClick={handleAnswerSubmit}
+                          className="px-4 py-2 bg-red-600 text-white rounded-md text-sm hover:bg-red-700 transition-colors"
+                        >
+                          Try Again
+                        </button>
+                      </div>
+                    )}
                     
                     {currentState.feedback && (
                       <div className={cn(

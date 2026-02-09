@@ -1,0 +1,13 @@
+{
+  "action": "query",
+  "request_source": "override_params",
+  "query": "What is 2+2?",
+  "model_provider": "aws",
+  "model_name": "claude4_5_sonnet",
+  "model_params": {
+    "temperature": 0.7,
+    "system_prompt": "You are the ASU Study Coach, an AI-powered study assistant that helps students with their courses.",
+    "enable_search": false,
+    "stream": true
+  }
+}

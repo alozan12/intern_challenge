@@ -1,0 +1,261 @@
+AI Spark Challenge
+Student Data ETL & AI Knowledge Pipeline
+1. Objective
+Build a production-style ETL pipeline that:
+Ingests student-specific Canvas-like JSON data
+
+
+Stores operational data in SQL
+
+
+Transforms learning activity into semantic JSONL documents
+
+
+Uploads those documents to CreateAI Project A
+
+
+Enables personalized insights and practice generation via RAG
+
+
+This pipeline processes only data that changes per student over time.
+
+2. High-Level Architecture
+Raw Student JSON
+   ↓
+ETL Pipeline
+   ↓
+SQL Database
+   ↓
+Semantic Text Generation
+   ↓
+JSONL File
+   ↓
+CreateAI Project A (Student Knowledge Base)
+
+
+3. Source Data (Raw JSON) 
+students.json → SQL 
+{ "id": 987654, "name": "Jordan Student", "email": "student@asu.edu" }
+
+courses.json → SQL 
+{ "course_id": 112233, "course_code": "CSE310", "term": "Spring 2026", “course_name”:”Introduction to Programming in Python” }
+
+enrollments.json → SQL
+{ "student_id": 987654, "course_id": 112233 }
+
+course_items.json → SQL + JSONL
+{
+  "item_id": 5002,
+  "student_id": 987654,
+  "course_id": 112233,
+  "item_type": "quiz",
+  "title": "Quiz 2: Trees",
+  "points_possible": 20,
+  "attempts": [
+    {
+      "attempt_no": 1,
+      "submitted_at": "2026-02-01T10:30:00Z",
+      "score": 8,
+      "questions": [
+        {
+          "topic": "BST complexity",
+          "correct_answer": "O(log n)",
+          "student_answer": "O(n)",
+          "is_correct": false
+        }
+      ]
+    },
+    {
+      "attempt_no": 2,
+      "submitted_at": "2026-02-03T14:10:00Z",
+      "score": 16,
+      "questions": [
+        {
+          "topic": "BST complexity",
+          "correct_answer": "O(log n)",
+          "student_answer": "O(log n)",
+          "is_correct": true
+        }
+      ]
+    }
+  ],
+  "feedback": [
+    { "comment": "Review tree balancing." }
+  ]
+}
+
+Assignment submissions 
+{
+  "item_id": 6001,
+  "student_id": 987654,
+  "course_id": 112233,
+  "item_type": "assignment",
+  "title": "Assignment 2: Trees",
+  "points_possible": 20,
+  "attempts": [
+    {
+      "attempt_no": 1,
+      "submitted_at": "2026-02-04T18:00:00Z",
+      "score": 14,
+      "submission": {
+        "files": ["hw2_v1.pdf"]
+      }
+    },
+    {
+      "attempt_no": 2,
+      "submitted_at": "2026-02-06T09:00:00Z",
+      "score": 18,
+      "submission": {
+        "files": ["hw2_final.pdf"]
+      }
+    }
+  ],
+  "feedback": [
+    { "comment": "Good approach, but missing edge cases." }
+  ]
+}
+
+4. Target SQL Schema
+Tables:
+4.1 students table
+students (
+  student_id        BIGINT PRIMARY KEY,
+  name              VARCHAR(255),
+  email             VARCHAR(255),
+  created_at        TIMESTAMP
+)
+Purpose:
+Identity
+Enrollment joins
+Frontend lookup
+
+4.2 courses table
+courses (
+  course_id         BIGINT PRIMARY KEY,
+  course_code       VARCHAR(50),
+  term              VARCHAR(50),
+  created_at        TIMESTAMP
+)
+
+Purpose:
+Course catalog
+Term-level grouping
+
+
+
+4.3 enrollments table
+enrollments (
+  enrollment_id     BIGINT PRIMARY KEY,
+  student_id        BIGINT REFERENCES students(student_id),
+  course_id         BIGINT REFERENCES courses(course_id),
+  enrolled_at       TIMESTAMP
+)
+
+Purpose:
+List courses per student
+Access control
+Frontend navigation
+
+4.4 course_items table
+course_items (
+  item_id           BIGINT PRIMARY KEY,
+  student_id        BIGINT REFERENCES students(student_id),
+  course_id         BIGINT REFERENCES courses(course_id),
+  item_type         VARCHAR(50),   -- quiz, assignment, exam
+  title             VARCHAR(255),
+  points_possible   INTEGER,
+  latest_score      INTEGER,
+  attempt_count     INTEGER,
+  last_submitted_at TIMESTAMP,
+  created_at        TIMESTAMP,
+  updated_at        TIMESTAMP
+)
+✅ What is stored
+Item identity
+Current state (latest score, attempt count)
+Used by frontend and dashboards
+5. JSONL Output (Semantic Layer)
+One JSONL line per course item, not per attempt.
+{
+"text": "Quiz 2 assessed understanding of tree data structures, particularly BST performance. The student attempted the quiz twice. In the first attempt, they struggled with BST time complexity, selecting O(n) instead of the correct O(log n), indicating confusion about balanced trees. After instructor feedback recommending a review of tree balancing, the second attempt showed improvement and corrected this misunderstanding. This progression suggests initial conceptual gaps that were resolved through iteration."
+}
+Key Requirements for Semantic Text
+The summary must include:
+Number of attempts
+Initial performance vs final performance
+What the student missed or struggled with in each attempt
+Whether misunderstandings were persistent or resolved
+Instructor feedback (summarized, not quoted verbatim)
+Learning implication (what this says about the student)
+6. ETL Logic
+Step-by-step ETL Flow
+Load raw JSON
+Persist operational fields to SQL
+Items
+Attempts
+Scores
+Submission timestamps
+Derive learning signals per item:
+Attempt count
+Initial vs final score
+Topics missed per attempt
+Topics repeatedly missed
+Improvement or stagnation
+Generate one semantic summary per course item using deterministic templates
+Write one JSONL line per item
+Append/update JSONL incrementally as new attempts arrive
+
+7. CreateAI Integration
+7.1 Upload Endpoint
+POST https://api-main-beta.aiml.asu.edu/project
+7.2 Upload Payload (Student Knowledge Base)
+{
+  "resource": "data",
+  "method": "upload",
+  "details": {
+    "project_id": "<STUDENT_PROJECT_ID>",
+    "db_type": "opensearch",
+    "files": [
+      {
+        "file_name": "student_items.jsonl",
+        "search_tags": ["student_learning"],
+        "metadata": {
+          "student_id": 987654,
+          "course_id": 112233,
+          "item_id": 5002,
+          "item_type": "quiz"
+        },
+        "selected": true,
+        "visible": true
+      }
+    ]
+  }
+}
+Metadata fields are indexed and filterable.
+
+8. Query-Time Filtering
+"expr": "student_id == 987654 && course_id == 112233 && item_type == 'quiz'"
+Enables:
+Per-student isolation
+Per-course reasoning
+Item-type-specific insights
+
+9. General Course Knowledge Base 
+Stored in CreateAI Project B
+Contains:
+Syllabus
+Lecture slides
+Assignment instructions
+Article Links
+Manually upload with the following metadata and can be shared by all students
+{
+  "course_id": 112233,
+  "material_type": "lecture_slides",
+  "filename": "avl_trees.pdf"
+}
+
+10. Key Design Decisions
+SQL stores attempts for operations; JSONL stores learning narratives
+Semantic summaries capture progression, struggle, and resolution
+Two knowledge bases for privacy and clarity
+ETL handles only student-changing data

@@ -3,7 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, Calendar, BarChart, User } from 'lucide-react'
+import { Home, BookOpen, Calendar, BarChart, User, GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SidebarLinkProps {
@@ -38,6 +38,7 @@ export function Sidebar() {
   const links = [
     { href: "/", icon: <Home />, label: "Dashboard" },
     { href: "/courses", icon: <BookOpen />, label: "Courses" },
+    { href: "/study", icon: <GraduationCap />, label: "Study" },
     { href: "/calendar", icon: <Calendar />, label: "Calendar" },
     { href: "/analytics", icon: <BarChart />, label: "Analytics" },
     { href: "/profile", icon: <User />, label: "Profile" },

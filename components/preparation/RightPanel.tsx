@@ -71,6 +71,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
   const [showFlashcardInterface, setShowFlashcardInterface] = useState(false)
   const [showMusicInterface, setShowMusicInterface] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   
   const dropdownRef = useRef<HTMLDivElement>(null)
   
@@ -122,7 +123,9 @@ export function RightPanel({ courseId }: RightPanelProps) {
     setShowOptions(false)
   }
   
-  const handleCreateFinalMaterial = (type: StudyMaterial['type']) => {
+  const handleCreateFinalMaterial = async (type: StudyMaterial['type']) => {
+    setIsGenerating(true);
+    
     // Mock creating a study material - replace with API call
     let focusLabel = '';
     
@@ -144,162 +147,85 @@ export function RightPanel({ courseId }: RightPanelProps) {
 
     // Generate specific content based on material type
     if (type === 'quiz') {
-      content = {
-        ...content,
-        questions: [
-          {
-            id: '1',
-            question: 'What is the primary function of the hippocampus in the brain?',
-            options: [
-              'Regulating body temperature',
-              'Processing visual information',
-              'Memory formation and retrieval',
-              'Controlling motor functions'
-            ],
-            correctAnswer: 2,
-            explanation: 'The hippocampus is crucial for forming new memories and retrieving existing ones. It plays a key role in converting short-term memories to long-term storage and spatial navigation.'
+      // Call API to generate quiz
+      try {
+        const response = await fetch('/api/study/quiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          {
-            id: '2',
-            question: 'Which psychological approach emphasizes the role of unconscious thoughts and childhood experiences?',
-            options: [
-              'Behaviorism',
-              'Cognitive Psychology',
-              'Psychoanalytic Theory',
-              'Humanistic Psychology'
-            ],
-            correctAnswer: 2,
-            explanation: 'Psychoanalytic theory, developed by Freud, focuses on unconscious drives, repressed memories, and early childhood experiences as primary influences on behavior and personality.'
-          },
-          {
-            id: '3',
-            question: 'In classical conditioning, what is the unconditioned response (UCR)?',
-            options: [
-              'A learned response to a conditioned stimulus',
-              'A neutral stimulus before conditioning',
-              'A natural, automatic response to an unconditioned stimulus',
-              'The process of learning new associations'
-            ],
-            correctAnswer: 2,
-            explanation: 'The unconditioned response (UCR) is an automatic, natural reaction that occurs in response to an unconditioned stimulus without any prior learning or conditioning required.'
-          },
-          {
-            id: '4',
-            question: 'What is the primary function of dopamine in the brain?',
-            options: [
-              'Pain regulation',
-              'Reward and motivation',
-              'Visual processing',
-              'Language production'
-            ],
-            correctAnswer: 1,
-            explanation: 'Dopamine is primarily involved in reward-motivated behavior and plays a crucial role in the brain\'s reward system, affecting motivation, pleasure, and reinforcement learning.'
-          },
-          {
-            id: '5',
-            question: 'Which of the following is NOT a defense mechanism according to psychoanalytic theory?',
-            options: [
-              'Repression',
-              'Projection',
-              'Cognitive restructuring',
-              'Displacement'
-            ],
-            correctAnswer: 2,
-            explanation: 'Cognitive restructuring is a technique from cognitive-behavioral therapy, not a defense mechanism from psychoanalytic theory. The others are classic defense mechanisms described by Freud.'
-          },
-          {
-            id: '6',
-            question: 'What is the main difference between short-term and long-term memory?',
-            options: [
-              'Type of information stored',
-              'Storage capacity and duration',
-              'Location in the brain',
-              'Age of formation'
-            ],
-            correctAnswer: 1,
-            explanation: 'The main difference between short-term and long-term memory is their storage capacity and duration. Short-term memory has limited capacity and lasts only seconds to minutes, while long-term memory has vast capacity and can last a lifetime.'
-          },
-          {
-            id: '7',
-            question: 'What is confirmation bias?',
-            options: [
-              'The tendency to be overconfident in one\'s abilities',
-              'The tendency to seek information that confirms existing beliefs',
-              'The bias to remember confirmed predictions better than failed ones',
-              'The bias to overestimate how much others agree with you'
-            ],
-            correctAnswer: 1,
-            explanation: 'Confirmation bias is the tendency to search for, interpret, favor, and recall information in a way that confirms one\'s preexisting beliefs while giving less consideration to alternative possibilities.'
-          },
-          {
-            id: '8',
-            question: 'Which part of the brain is primarily responsible for emotional regulation?',
-            options: [
-              'Cerebellum',
-              'Amygdala',
-              'Occipital lobe',
-              'Motor cortex'
-            ],
-            correctAnswer: 1,
-            explanation: 'The amygdala plays a key role in processing emotions, especially fear and threat detection, and is central to emotional regulation and emotional learning.'
-          },
-          {
-            id: '9',
-            question: 'What is neuroplasticity?',
-            options: [
-              'The brain\'s ability to grow new neurons',
-              'The brain\'s ability to form new neural connections and reorganize',
-              'The brain\'s resilience to physical damage',
-              'The brain\'s ability to process multiple inputs simultaneously'
-            ],
-            correctAnswer: 1,
-            explanation: 'Neuroplasticity refers to the brain\'s ability to change continuously throughout life, forming new neural connections and reorganizing in response to learning, experience, injury, or disease.'
-          },
-          {
-            id: '10',
-            question: 'Which theory is associated with B.F. Skinner?',
-            options: [
-              'Cognitive development',
-              'Psychoanalytic theory',
-              'Operant conditioning',
-              'Social learning theory'
-            ],
-            correctAnswer: 2,
-            explanation: 'B.F. Skinner is most closely associated with operant conditioning, a type of learning where behavior is controlled by consequences, either reinforcement or punishment.'
-          }
-        ]
+          body: JSON.stringify({
+            topic: 'Course Content', // You might want to make this dynamic
+            courseId: courseId,
+            courseName: 'Data Structures', // You might want to pass actual course data
+            courseCode: 'CSE 110',
+            questionCount: 10,
+            difficulty: 'intermediate',
+            generationType: contentFocus === 'knowledge_gaps' ? 'learning_gaps' : 'general_content',
+            studentId: 'student-123' // Mock student ID
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to generate quiz');
+        }
+        
+        const data = await response.json();
+        
+        if (data.quiz && data.quiz.content) {
+          content = data.quiz.content;
+        } else {
+          throw new Error('No quiz returned from API');
+        }
+      } catch (error) {
+        console.error('Error generating quiz:', error);
+        // Fallback to empty content
+        content = {
+          ...content,
+          questions: []
+        };
       }
     } else if (type === 'flashcards') {
-      content = {
-        ...content,
-        cards: [
-          {
-            id: '1',
-            front: 'Hippocampus',
-            back: 'A region of the brain crucial for memory formation, consolidation, and spatial navigation. It converts short-term memories into long-term memories and is part of the limbic system.'
+      // Call API to generate flashcards
+      try {
+        const response = await fetch('/api/study/flashcards', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          {
-            id: '2',
-            front: 'Classical Conditioning',
-            back: 'A learning process where a neutral stimulus becomes associated with a meaningful stimulus, eventually triggering a similar response. Discovered by Ivan Pavlov through his experiments with dogs.'
-          },
-          {
-            id: '3',
-            front: 'Neuroplasticity',
-            back: 'The brain\'s ability to reorganize and form new neural connections throughout life. This allows the brain to adapt to new experiences, learn new skills, and recover from injuries.'
-          },
-          {
-            id: '4',
-            front: 'Cognitive Dissonance',
-            back: 'The mental discomfort experienced when holding contradictory beliefs, values, or attitudes simultaneously. People are motivated to reduce this dissonance by changing their beliefs or behaviors.'
-          },
-          {
-            id: '5',
-            front: 'Operant Conditioning',
-            back: 'A learning method where behaviors are modified through consequences such as rewards and punishments. Developed by B.F. Skinner, it explains how voluntary behaviors are strengthened or weakened.'
-          },
-          {
-            id: '6',
+          body: JSON.stringify({
+            topic: 'Course Content', // You might want to make this dynamic
+            courseId: courseId,
+            courseName: 'Data Structures', // You might want to pass actual course data
+            courseCode: 'CSE 110',
+            cardCount: 10,
+            difficulty: 'intermediate',
+            generationType: contentFocus === 'knowledge_gaps' ? 'learning_gaps' : 'general_content',
+            studentId: 'student-123' // Mock student ID
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to generate flashcards');
+        }
+        
+        const data = await response.json();
+        
+        if (data.flashcards && data.flashcards.content) {
+          content = data.flashcards.content;
+        } else {
+          throw new Error('No flashcards returned from API');
+        }
+      } catch (error) {
+        console.error('Error generating flashcards:', error);
+        // Fallback to empty content
+        content = {
+          ...content,
+          cards: []
+        };
+      }
+      /*
+      // Old hardcoded flashcards
             front: 'Dopamine',
             back: 'A neurotransmitter associated with pleasure, reward, and motivation. It plays a key role in the brain\'s reward system and is involved in addiction, movement, and emotional regulation.'
           },
@@ -325,6 +251,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
           }
         ]
       }
+      */
     } else if (type === 'music') {
       content = {
         ...content,
@@ -374,6 +301,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
     setSelectedGenre('pop')
     setShowFocusDropdown(false)
     setShowSectionsDropdown(false)
+    setIsGenerating(false)
   }
   
   const toggleSection = (sectionId: string) => {
@@ -709,9 +637,17 @@ export function RightPanel({ courseId }: RightPanelProps) {
             <div className="mt-2 flex justify-end">
               <button
                 onClick={() => handleCreateFinalMaterial(selectedMaterialType)}
-                className="px-4 py-2 bg-asu-maroon text-white rounded-lg hover:bg-red-900 transition-colors text-sm font-medium"
+                disabled={isGenerating}
+                className="px-4 py-2 bg-asu-maroon text-white rounded-lg hover:bg-red-900 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Generate Material
+                {isGenerating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Material'
+                )}
               </button>
             </div>
           </div>
@@ -774,6 +710,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
           </div>
         )}
       </div>
+
 
       {/* Footer Info */}
       <div className="border-t border-gray-200 p-4 bg-gray-50">

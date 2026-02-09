@@ -1,0 +1,187 @@
+{
+  "student_id": "987654",
+  "identified_gaps": [
+    {
+      "course_id": "112233",
+      "course_code": "CSE310",
+      "gaps": [
+        {
+          "topic": "BST complexity",
+          "confidence": "medium",
+          "based_on": [
+            {
+              "item_id": "5002",
+              "item_type": "quiz",
+              "title": "Quiz 2: Trees",
+              "attempt_count": 2,
+              "initially_correct": false,
+              "resolved": true
+            }
+          ],
+          "last_practiced": "2026-02-03T14:10:00Z",
+          "recommended_review": true
+        },
+        {
+          "topic": "tree balancing",
+          "confidence": "low",
+          "based_on": [
+            {
+              "item_id": "5002",
+              "item_type": "quiz",
+              "title": "Quiz 2: Trees",
+              "attempt_count": 2,
+              "initially_correct": false,
+              "resolved": true
+            }
+          ],
+          "last_practiced": "2026-02-03T14:10:00Z",
+          "recommended_review": true
+        },
+        {
+          "topic": "array insertion complexity",
+          "confidence": "medium",
+          "based_on": [
+            {
+              "item_id": "5001",
+              "item_type": "quiz",
+              "title": "Quiz 1: Arrays and Linked Lists",
+              "attempt_count": 1,
+              "initially_correct": false,
+              "resolved": false
+            }
+          ],
+          "last_practiced": "2026-01-15T14:30:00Z",
+          "recommended_review": true
+        },
+        {
+          "topic": "edge cases in tree operations",
+          "confidence": "medium",
+          "based_on": [
+            {
+              "item_id": "6001",
+              "item_type": "assignment",
+              "title": "Assignment 2: Trees",
+              "attempt_count": 2,
+              "initially_correct": false,
+              "resolved": true
+            }
+          ],
+          "last_practiced": "2026-02-06T09:00:00Z",
+          "recommended_review": true
+        }
+      ],
+      "upcoming_topics": [
+        {
+          "topic": "graph traversal algorithms",
+          "related_items": [
+            {
+              "item_id": "7001",
+              "item_type": "quiz",
+              "title": "Quiz 3: Graphs",
+              "due_date": "2026-02-15T23:59:59Z"
+            }
+          ],
+          "pre_study_recommended": true
+        },
+        {
+          "topic": "shortest path algorithms",
+          "related_items": [
+            {
+              "item_id": "8001",
+              "item_type": "assignment",
+              "title": "Assignment 3: Graph Algorithms",
+              "due_date": "2026-02-20T23:59:59Z"
+            }
+          ],
+          "pre_study_recommended": true
+        }
+      ]
+    },
+    {
+      "course_id": "112234",
+      "course_code": "CSE340",
+      "gaps": [
+        {
+          "topic": "procedural programming concepts",
+          "confidence": "low",
+          "based_on": [
+            {
+              "item_id": "5101",
+              "item_type": "quiz",
+              "title": "Quiz 1: Programming Paradigms",
+              "attempt_count": 1,
+              "initially_correct": false,
+              "resolved": false
+            }
+          ],
+          "last_practiced": "2026-01-20T11:45:00Z",
+          "recommended_review": true
+        }
+      ],
+      "upcoming_topics": []
+    }
+  ],
+  "strength_areas": [
+    {
+      "course_id": "112233",
+      "topics": [
+        {
+          "topic": "array vs linked list comparison",
+          "confidence": "high",
+          "last_demonstrated": "2026-01-15T14:30:00Z"
+        },
+        {
+          "topic": "linked list insertion",
+          "confidence": "high",
+          "last_demonstrated": "2026-01-15T14:30:00Z"
+        },
+        {
+          "topic": "tree traversal algorithms",
+          "confidence": "high",
+          "last_demonstrated": "2026-02-03T14:10:00Z"
+        }
+      ]
+    },
+    {
+      "course_id": "112234",
+      "topics": [
+        {
+          "topic": "functional programming",
+          "confidence": "high",
+          "last_demonstrated": "2026-01-20T11:45:00Z"
+        },
+        {
+          "topic": "object-oriented programming",
+          "confidence": "high",
+          "last_demonstrated": "2026-01-20T11:45:00Z"
+        }
+      ]
+    }
+  ],
+  "recommended_spaced_repetition": [
+    {
+      "topic": "BST complexity",
+      "course_id": "112233",
+      "next_practice_date": "2026-02-10T00:00:00Z",
+      "interval_days": 7
+    },
+    {
+      "topic": "tree balancing",
+      "course_id": "112233",
+      "next_practice_date": "2026-02-06T00:00:00Z",
+      "interval_days": 3
+    },
+    {
+      "topic": "array insertion complexity",
+      "course_id": "112233",
+      "next_practice_date": "2026-02-08T00:00:00Z",
+      "interval_days": 7
+    },
+    {
+      "topic": "procedural programming concepts",
+      "course_id": "112234",
+      "next_practice_date": "2026-02-09T00:00:00Z",
+      "interval_days": 3
+    }
+  ]
+}
