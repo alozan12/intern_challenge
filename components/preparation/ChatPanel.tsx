@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Mic } from 'lucide-react'
+import { Send, Paperclip, Mic, BookOpen, Plus, X } from 'lucide-react'
 import { ChatMessage } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -27,6 +27,10 @@ const getCourseInfo = (courseId: string) => {
 export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
   const courseInfo = getCourseInfo(courseId)
   const { viewMode } = useViewMode()
+  const [isStudyMode, setIsStudyMode] = useState(false)
+  const [showModeNotification, setShowModeNotification] = useState(false)
+  const [notificationType, setNotificationType] = useState<'enter' | 'exit' | null>(null)
+  const [showModeToggle, setShowModeToggle] = useState(false)
   
   // Initialize messages with course-specific content
   const createInitialMessage = () => ({
@@ -44,6 +48,7 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const modeToggleRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -52,6 +57,20 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Handle clicking outside of the mode toggle dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (modeToggleRef.current && !modeToggleRef.current.contains(event.target as Node)) {
+        setShowModeToggle(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -79,6 +98,8 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
           studentId: '987654', // Example student ID
           courseId: courseId,
           stream: false,
+          // Include study mode flag - updated dynamically from state
+          studyMode: isStudyMode,
           // Added for error handling
           fallbackToMock: true
         }),
@@ -127,18 +148,44 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
       {/* Header */}
       <div className="border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className={cn("font-semibold text-gray-900", viewMode === 'compact' ? 'text-base' : 'text-lg')}>AI Study Coach</h2>
-            <p className={cn("text-gray-600", viewMode === 'compact' ? 'text-xs' : 'text-sm')}>Ask questions about your course content</p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h2 className={cn("font-semibold text-gray-900", viewMode === 'compact' ? 'text-base' : 'text-lg')}>
+                {isStudyMode ? (
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="w-4 h-4" /> Study Mode
+                  </span>
+                ) : (
+                  'AI Study Coach'
+                )}
+              </h2>
+              <p className={cn("text-gray-600", viewMode === 'compact' ? 'text-xs' : 'text-sm')}>
+                {isStudyMode 
+                  ? 'Interactive guided learning with practice questions' 
+                  : 'Ask questions about your course content'}
+              </p>
+            </div>
+            {isStudyMode && (
+              <div className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-md">
+                Active
+              </div>
+            )}
           </div>
-          <button 
-            onClick={async () => {
+          <div className="flex items-center gap-2">
+            {/* New session button */}
+            <button 
+              onClick={async () => {
               console.log('Starting new session');
               // Only save session if it has user messages
               if (messages.length > 1) {
                 console.log('Saving old session', messages);
                 // Save current session to history
                 setPastSessions(prev => [...prev, [...messages]]);
+              }
+              
+              // Exit study mode if active
+              if (isStudyMode) {
+                setIsStudyMode(false);
               }
               
               setIsLoading(true);
@@ -182,13 +229,14 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                 setIsLoading(false);
               }
             }}
-            className={cn(
-              "text-white rounded-md hover:bg-red-900 transition-colors flex items-center gap-1 bg-asu-maroon",
-              viewMode === 'compact' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
-            )}
-          >
-            Start New Session
-          </button>
+              className={cn(
+                "text-white rounded-md hover:bg-red-900 transition-colors flex items-center gap-1 bg-asu-maroon",
+                viewMode === 'compact' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'
+              )}
+            >
+              Start New Session
+            </button>
+          </div>
         </div>
       </div>
 
@@ -237,50 +285,163 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
             </div>
           )}
           
+          {/* Mode change notification */}
+          {showModeNotification && (
+            <div className="flex justify-center">
+              <div className={cn(
+                "px-4 py-2 rounded-full text-sm transition-opacity duration-300 flex items-center gap-2",
+                notificationType === 'enter' ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+              )}>
+                {notificationType === 'enter' ? (
+                  <>
+                    <BookOpen className="w-4 h-4" /> 
+                    Study Mode activated
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="w-4 h-4" /> 
+                    Study Mode deactivated
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
       </div>
 
       {/* Input */}
       <div className="border-t border-gray-200 px-6 py-4">
-        <div className="flex items-end gap-3">
-          <button className="p-2 text-gray-500 hover:text-gray-700 transition-colors">
-            <Paperclip className="w-5 h-5" />
-          </button>
-          
-          <div className="flex-1 relative">
+        <div className="relative">
+          <div className="flex items-center h-10 bg-white rounded-lg border border-gray-300 overflow-hidden focus-within:border-asu-maroon focus-within:ring-1 focus-within:ring-asu-maroon transition-colors">
+            {/* Plus button with dropdown */}
+            <div className="pl-3 flex items-center justify-start w-10" ref={modeToggleRef}>
+              <button
+                onClick={() => setShowModeToggle(prev => !prev)}
+                className={cn(
+                  "flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors",
+                  isStudyMode && "text-green-600"
+                )}
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+              
+              {showModeToggle && (
+                <div className="absolute bottom-full mb-2 left-0 w-56 rounded-md shadow-lg bg-white border border-gray-200 z-10">
+                  <div className="p-1 space-y-0.5">
+                    {/* Study Mode option */}
+                    <button
+                      onClick={() => {
+                        setShowModeToggle(false);
+                        // Show notification and set type based on current mode state
+                        setNotificationType(isStudyMode ? 'exit' : 'enter');
+                        setShowModeNotification(true);
+                        // Hide notification after 3 seconds
+                        setTimeout(() => {
+                          setShowModeNotification(false);
+                        }, 3000);
+                        // Toggle study mode
+                        setIsStudyMode(!isStudyMode);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2",
+                        "hover:bg-gray-100",
+                        "text-gray-700"
+                      )}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      {isStudyMode ? "Exit Study Mode" : "Start Study Mode"}
+                    </button>
+                    
+                    <div className="border-t border-gray-200 mt-1 mb-2 pt-2">
+                      <p className="px-3 text-xs text-gray-500">Attach File</p>
+                    </div>
+                    
+                    {/* Document upload */}
+                    <button
+                      onClick={() => {
+                        setShowModeToggle(false);
+                        // This would open a file picker in a real implementation
+                        console.log('Upload document');
+                        // For now just add a mock message
+                        const userMessage: ChatMessage = {
+                          id: Date.now().toString(),
+                          role: 'user',
+                          content: '[Document uploaded: lecture_notes.pdf]',
+                          timestamp: new Date()
+                        };
+                        setMessages(prev => [...prev, userMessage]);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 hover:bg-gray-100 text-gray-700"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                      Document
+                    </button>
+                    
+                    {/* Image upload */}
+                    <button
+                      onClick={() => {
+                        setShowModeToggle(false);
+                        // This would open a file picker in a real implementation
+                        console.log('Upload image');
+                        // For now just add a mock message
+                        const userMessage: ChatMessage = {
+                          id: Date.now().toString(),
+                          role: 'user',
+                          content: '[Image uploaded: diagram.png]',
+                          timestamp: new Date()
+                        };
+                        setMessages(prev => [...prev, userMessage]);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 hover:bg-gray-100 text-gray-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                      </svg>
+                      Image
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Input field */}
             <textarea
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask anything..."
-              className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 pr-12 focus:border-asu-maroon focus:outline-none focus:ring-1 focus:ring-asu-maroon transition-colors"
+              placeholder={isStudyMode ? "Enter your understanding of the topic..." : "Ask anything..."}
+              className="flex-1 border-none outline-none py-2 px-3 resize-none focus:ring-0"
               rows={1}
-              style={{ minHeight: '48px', maxHeight: '120px' }}
+              style={{ minHeight: '40px', maxHeight: '120px' }}
             />
-            <button className="absolute right-2 bottom-2 p-2 text-gray-500 hover:text-gray-700 transition-colors">
-              <Mic className="w-4 h-4" />
-            </button>
+            
+            {/* Send button */}
+            <div className="pr-3 flex items-center justify-end w-10">
+              <button
+                onClick={handleSend}
+                disabled={!input.trim() || isLoading}
+                className={cn(
+                  "flex items-center justify-center transition-colors",
+                  input.trim() && !isLoading
+                    ? "text-asu-maroon hover:text-red-900"
+                    : "text-gray-300 cursor-not-allowed"
+                )}
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className={cn(
-              "p-3 rounded-lg transition-colors",
-              input.trim() && !isLoading
-                ? "bg-asu-maroon text-white hover:bg-red-900"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            )}
-          >
-            <Send className="w-5 h-5" />
-          </button>
+          
+          {/* Attachment text */}
+          <p className="text-xs text-gray-500 mt-2">
+            Attach or Drop Files Here
+          </p>
         </div>
-        
-        <p className="text-xs text-gray-500 mt-2">
-          Attach or Drop Files Here
-        </p>
       </div>
     </div>
   )

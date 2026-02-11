@@ -3,6 +3,8 @@ import { queryCreateAI } from '@/lib/createAI';
 import { FlashcardSet } from '@/types';
 import { promises as fs } from 'fs';
 import path from 'path';
+// Import flashcard prompts
+import { flashcards } from '@/prompts';
 
 // Define interfaces for flashcard generation request and response
 interface FlashcardRequest {
@@ -148,71 +150,16 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Set up system prompt and user prompt
+    // Set up system prompt and user prompt using imported templates
     let systemPrompt = '';
     let userPrompt = '';
     
     if (generationType === 'learning_gaps') {
-      systemPrompt = `You are an expert educational content creator specializing in generating flashcards for college-level learning with a focus on addressing specific learning gaps.
-      
-Your task is to create targeted flashcards that help students address their specific learning gaps. Each flashcard should have a clear front (term or concept) and back (comprehensive definition or explanation) that focuses on common misconceptions or difficult aspects of the topic.
-
-IMPORTANT: You MUST respond with ONLY valid JSON. Do not include any markdown formatting, code blocks, or explanatory text. Your entire response should be parseable as JSON.
-
-Guidelines:
-- Create flashcards with appropriate depth based on the requested difficulty level
-- For basic difficulty: Focus on fundamental definitions and core concepts
-- For intermediate difficulty: Include more detailed explanations and some applications
-- For advanced difficulty: Provide comprehensive explanations with nuance and technical details
-- Address common misconceptions directly in the definitions
-- Focus on clarifying confusing aspects of the topic
-- Each definition should be factually accurate and written in clear, academic language
-- Format the response as a valid JSON object with this exact structure:
-  {
-    "cards": [
-      {
-        "front": "Term or concept",
-        "back": "Definition or explanation"
-      },
-      ...
-    ]
-  }
-
-Generate ${cardCount} flashcards to help address learning gaps in the requested topic.
-
-IMPORTANT: Your response MUST be valid JSON without any markdown formatting or additional text.`;
-
-      userPrompt = `Generate ${cardCount} ${difficulty} level flashcards about "${topic}" for a student who is struggling with this topic in their course ${courseName ? `called "${courseName}" (${courseCode})` : ''}. Focus on addressing common misconceptions and difficult aspects of the topic. Each flashcard should have a front (term/concept) and back (comprehensive definition/explanation).${knowledgeContext}`;
+      systemPrompt = flashcards.learningGapsSystemPrompt(cardCount);
+      userPrompt = flashcards.learningGapsUserPrompt(cardCount, difficulty, topic, courseName, courseCode, knowledgeContext);
     } else {
-      systemPrompt = `You are an expert educational content creator specializing in generating flashcards for college-level learning.
-      
-Your task is to create accurate, concise, and educational flashcards on the requested topic. Each flashcard should have a clear front (term or concept) and back (comprehensive definition or explanation).
-
-IMPORTANT: You MUST respond with ONLY valid JSON. Do not include any markdown formatting, code blocks, or explanatory text. Your entire response should be parseable as JSON.
-
-Guidelines:
-- Create flashcards with appropriate depth based on the requested difficulty level
-- For basic difficulty: Focus on fundamental definitions and core concepts
-- For intermediate difficulty: Include more detailed explanations and some applications
-- For advanced difficulty: Provide comprehensive explanations with nuance and technical details
-- Each definition should be factually accurate and written in clear, academic language
-- Avoid overly simplified definitions that miss key aspects of the concept
-- Format the response as a valid JSON object with this exact structure:
-  {
-    "cards": [
-      {
-        "front": "Term or concept",
-        "back": "Definition or explanation"
-      },
-      ...
-    ]
-  }
-
-Generate ${cardCount} flashcards for the topic requested.
-
-IMPORTANT: Your response MUST be valid JSON without any markdown formatting or additional text.`;
-
-      userPrompt = `Generate ${cardCount} ${difficulty} level flashcards about "${topic}" for a college course ${courseName ? `called "${courseName}" (${courseCode})` : ''}. Each flashcard should have a front (term/concept) and back (comprehensive definition/explanation).${knowledgeContext}`;
+      systemPrompt = flashcards.generalContentSystemPrompt(cardCount);
+      userPrompt = flashcards.generalContentUserPrompt(cardCount, difficulty, topic, courseName, courseCode, knowledgeContext);
     }
     
     // Set up options for CreateAI API

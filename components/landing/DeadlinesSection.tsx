@@ -6,10 +6,12 @@ import { Course, Deadline } from '@/types'
 import { ArrowRight, Calendar, Clock, FileText, GraduationCap, MessageSquare, ClipboardCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 
 interface DeadlinesSectionProps {
-  courses: Course[]
+  courses?: Course[]
   showTitle?: boolean
+  useLiveData?: boolean
 }
 
 // Helper function to get appropriate icon and color based on deadline type
@@ -59,19 +61,72 @@ function getDeadlineLabel(date: Date): string {
   return formatDistanceToNow(date, { addSuffix: true })
 }
 
-export function DeadlinesSection({ courses, showTitle = true }: DeadlinesSectionProps) {
-  // Extract all deadlines from all courses and sort by due date
-  const allDeadlines = courses.flatMap(course => 
-    course.upcomingDeadlines.map(deadline => ({
-      ...deadline,
-      courseName: course.name,
-      courseCode: course.code,
-      courseColor: course.color
-    }))
-  ).sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+export function DeadlinesSection({ courses, showTitle = true, useLiveData = true }: DeadlinesSectionProps) {
+  const [deadlines, setDeadlines] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(useLiveData);
+  const [error, setError] = useState<string | null>(null);
   
-  // Show all deadlines without filtering
-  const filteredDeadlines = allDeadlines;
+  useEffect(() => {
+    if (useLiveData) {
+      // Fetch deadlines from the API
+      const fetchDeadlines = async () => {
+        try {
+          const response = await fetch('/api/deadlines');
+          const data = await response.json();
+          
+          if (data.success && data.deadlines) {
+            // Process the deadlines to ensure dueDate is a Date object
+            const processedDeadlines = data.deadlines.map((deadline: any) => ({
+              ...deadline,
+              dueDate: deadline.dueDate ? new Date(deadline.dueDate) : new Date()
+            }));
+            
+            // Filter deadlines to only show those within the next 14 days
+            const today = new Date();
+            const twoWeeksFromNow = new Date();
+            twoWeeksFromNow.setDate(today.getDate() + 14);
+            
+            const filteredDeadlines = processedDeadlines.filter((deadline: any) => {
+              const dueDate = new Date(deadline.dueDate);
+              return dueDate >= today && dueDate <= twoWeeksFromNow;
+            });
+            
+            // Sort by due date (earliest first)
+            const sortedDeadlines = filteredDeadlines.sort((a: any, b: any) => {
+              return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+            });
+            
+            setDeadlines(sortedDeadlines);
+          } else {
+            setError('Failed to fetch deadlines');
+          }
+        } catch (err) {
+          console.error('Error fetching deadlines:', err);
+          setError('Error fetching deadlines');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchDeadlines();
+    } else if (courses) {
+      // Use provided mock data
+      const allDeadlines = courses.flatMap(course => 
+        course.upcomingDeadlines.map(deadline => ({
+          ...deadline,
+          courseName: course.name,
+          courseCode: course.code,
+          courseColor: course.color
+        }))
+      ).sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+      
+      setDeadlines(allDeadlines);
+      setIsLoading(false);
+    }
+  }, [courses, useLiveData]);
+  
+  // Deadlines are already filtered by the 14-day window in useEffect
+  const displayDeadlines = deadlines;
   
   // Animation variants
   const containerVariants = {
@@ -120,8 +175,16 @@ export function DeadlinesSection({ courses, showTitle = true }: DeadlinesSection
         initial="hidden"
         animate="visible"
         className="divide-y divide-gray-200 max-h-[380px] overflow-y-auto scrollbar-thin">
-        {filteredDeadlines.length > 0 ? (
-          filteredDeadlines.map((deadline) => (
+        {isLoading ? (
+          <div className="p-6 text-center">
+            <p className="text-gray-500">Loading deadlines...</p>
+          </div>
+        ) : error ? (
+          <div className="p-6 text-center">
+            <p className="text-gray-500">{error}</p>
+          </div>
+        ) : displayDeadlines.length > 0 ? (
+          displayDeadlines.map((deadline) => (
             <motion.div 
               key={deadline.id} 
               variants={itemVariants}
@@ -185,7 +248,7 @@ export function DeadlinesSection({ courses, showTitle = true }: DeadlinesSection
           ))
         ) : (
           <div className="p-6 text-center">
-            <p className="text-gray-500">No deadlines found matching your filters.</p>
+            <p className="text-gray-500">No deadlines found.</p>
           </div>
         )}
       </motion.div>

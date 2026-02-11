@@ -6,7 +6,7 @@ import { AnalyticsCarousel } from '@/components/landing/AnalyticsCarousel'
 import { PreviousSessionCard } from '@/components/landing/PreviousSessionCard'
 import { AIInsights } from '@/components/landing/AIInsights'
 import { MiniCalendar } from '@/components/landing/MiniCalendar'
-import { Course, Deadline, Analytics } from '@/types'
+import { Course, Analytics } from '@/types'
 import { SunMedium } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -178,7 +178,7 @@ const mockAnalytics: Analytics = {
   lastTested: '23 Sep 2024'
 }
 
-const allDeadlines: Deadline[] = mockCourses.flatMap(course => course.upcomingDeadlines)
+// Removed - using real data now
 
 export default function LandingPage() {
   // Animation variants for staggered animations
@@ -241,9 +241,9 @@ export default function LandingPage() {
               <h2 className="text-lg font-semibold text-gray-900">Upcoming Deadlines</h2>
             </div>
             <div className="flex flex-col">
-              <DeadlinesSection courses={mockCourses} showTitle={false} />
+              <DeadlinesSection useLiveData={true} showTitle={false} />
               <div className="p-4 pt-0 border-t-2 border-gray-300">
-                <MiniCalendar deadlines={allDeadlines} />
+                <MiniCalendar useLiveData={true} />
               </div>
             </div>
           </div>

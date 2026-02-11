@@ -3,6 +3,23 @@ import { queryCreateAI, generateInsight } from '@/lib/createAI';
 import { createAIStream } from '@/lib/compatAI';
 import { getLearningGaps } from '@/mocks/learning-gaps';
 import { StreamResponse } from '@/lib/utils';
+// Import prompt templates
+import {
+  studyCoachSystemPrompt,
+  courseSpecificPrompt,
+  learningGapsPrompt,
+  preparationPagePrompt,
+  attemptFirstGuidancePrompt
+} from '@/prompts/chat/study-coach';
+
+// Import study mode prompts
+import {
+  studyModeSystemPrompt,
+  assessmentContextPrompt,
+  topicFocusPrompt,
+  studyModeInitialMessage,
+  getStudyModeGreetingPrompt
+} from '@/prompts/chat/study-mode';
 // TextEncoder for the Edge runtime
 const encoder = new TextEncoder();
 
@@ -18,6 +35,7 @@ interface ChatRequest {
   courseId?: string;
   preparationPageId?: string;
   stream?: boolean;
+  studyMode?: boolean;
 }
 
 interface ChatResponse {
@@ -30,7 +48,7 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, studentId, courseId, preparationPageId, stream = false }: ChatRequest = await req.json();
+    const { messages, studentId, courseId, preparationPageId, stream = false, studyMode = false }: ChatRequest = await req.json();
     
     // Make sure we have messages
     if (!messages || messages.length === 0) {
@@ -89,54 +107,51 @@ export async function POST(req: NextRequest) {
       previousMessages: messages.slice(0, -1)
     };
     
-    // Construct detailed system prompt
-    let systemPrompt = 'You are the ASU Study Coach, an AI-powered study assistant that helps students with their courses.';
-    systemPrompt += '\n\nYour goal is to guide student learning rather than providing direct answers. You should:';
-    systemPrompt += '\n- Provide scaffolding to help students reach their own understanding';
-    systemPrompt += '\n- Ask follow-up questions to engage students in active learning';
-    systemPrompt += '\n- Tailor explanations to the student\'s identified learning gaps';
-    systemPrompt += '\n- Use the Socratic method when appropriate';
-    systemPrompt += '\n- Require student attempt or explanation before providing detailed help';
+    // Construct detailed system prompt using imported prompt templates
+    // Choose base prompt based on mode
+    let systemPrompt = studyMode ? studyModeSystemPrompt : studyCoachSystemPrompt;
     
     if (courseId && courseName) {
-      systemPrompt += `\n\nYou are currently assisting with the course: ${courseName} (${courseId}).`;
-      systemPrompt += '\n\nFocus your responses on course-specific content and provide learning support tailored to the student\'s needs.';
-      systemPrompt += '\n\nYour knowledge includes:';
-      systemPrompt += '\n- Course materials and topics';
-      systemPrompt += '\n- Student\'s performance on assignments and quizzes';
-      systemPrompt += '\n- Identified learning gaps and areas for improvement';
-      systemPrompt += '\n- Upcoming deadlines and assessments';
+      // In study mode, we handle course info differently
+      if (!studyMode) {
+        systemPrompt += courseSpecificPrompt(courseName, courseId);
+      }
       
       // Add context about learning gaps if available
       if (learningGapsData && typeof learningGapsData === 'object' && Object.keys(learningGapsData).length > 0) {
-        systemPrompt += '\n\nThe student has shown learning gaps in the following areas:';
-        
         const gapTopics = Array.isArray((learningGapsData as any).gaps)
           ? (learningGapsData as any).gaps.map((gap: any) => gap.topic)
           : [];
           
         if (gapTopics.length > 0) {
-          gapTopics.forEach((topic: string) => {
-            systemPrompt += `\n- ${topic}`;
-          });
-          systemPrompt += '\n\nPay special attention to these areas in your responses and provide targeted help.';
+          if (studyMode) {
+            // For study mode, focus directly on the gaps
+            const primaryGapTopic = gapTopics[0]; // Focus on the main gap topic
+            systemPrompt += topicFocusPrompt(primaryGapTopic);
+          } else {
+            // Regular mode gap handling
+            systemPrompt += learningGapsPrompt(gapTopics);
+          }
         }
       }
       
       // Add context about preparation page if available
       if (preparationPageId) {
-        systemPrompt += `\n\nThe student is currently on a preparation page for assignment/quiz ID: ${preparationPageId}.`;
-        systemPrompt += '\nFocus your assistance on helping them prepare for this specific assessment.';
+        if (studyMode) {
+          // Get assessment type from preparation ID (this is mock logic - real app would query)
+          const assessmentType = preparationPageId.includes('quiz') ? 'quiz' : 
+                                preparationPageId.includes('exam') ? 'exam' : 'assignment';
+          systemPrompt += assessmentContextPrompt(assessmentType);
+        } else {
+          systemPrompt += preparationPagePrompt(preparationPageId);
+        }
       }
     }
     
-    // Add guidance for attempt-first approach
-    systemPrompt += '\n\nIMPORTANT: Before providing full solutions or explanations to problems:';
-    systemPrompt += '\n1. First ask the student what they understand about the topic';
-    systemPrompt += '\n2. Encourage them to explain their current approach';
-    systemPrompt += '\n3. Provide hints and guided questions before revealing complete answers';
-    systemPrompt += '\n4. Follow up with checks for understanding';
-    systemPrompt += '\n\nYour responses should be helpful, encouraging, and tailored to the student\'s needs, while promoting independent learning.';    
+    // Add guidance for attempt-first approach - only for regular mode, already included in study mode
+    if (!studyMode) {
+      systemPrompt += attemptFirstGuidancePrompt;
+    }
     
     // Set up options for CreateAI API
     const options = {
@@ -187,8 +202,18 @@ export async function POST(req: NextRequest) {
         hasContext: !!options.context
       }));
       
+      // Check if this is a request for a study mode greeting
+      const isStudyModeGreeting = studyMode && 
+                                messages.length === 1 && 
+                                lastMessage.content.toLowerCase().includes('study mode');
+      
+      // If this is a request for a study mode greeting, adjust the content
+      const userContent = isStudyModeGreeting ? 
+        getStudyModeGreetingPrompt(courseId ? courseName || courseId : 'your course') : 
+        lastMessage.content;
+      
       // Use direct query API which works with our token
-      const queryResponse = await queryCreateAI<{ response: string }>(lastMessage.content, options);
+      const queryResponse = await queryCreateAI<{ response: string }>(userContent, options);
       
       if (!queryResponse.error) {
         // Get the response from the query API

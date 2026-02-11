@@ -1,15 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Course, Deadline } from '@/types'
+import { Deadline } from '@/types'
 import { ChevronRight, Clock, Calendar, Check, ChevronUp, ChevronDown, FileText, FileQuestion, BookOpen, MessageSquare } from 'lucide-react'
 import { format, isPast, isFuture, isToday, isTomorrow, formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { AnimatePresence, motion } from 'framer-motion'
 
-// Mock data with additional past deadlines for demonstration
-const mockCourses: Course[] = [
+// This mock data is kept for reference but is no longer used
+// We now fetch real data from the API
+/* const mockCourses: Course[] = [
   {
     id: '1',
     name: 'Introduction to Computer Science',
@@ -207,7 +208,7 @@ const mockCourses: Course[] = [
       }
     ]
   }
-]
+] */
 
 // Function to get appropriate icon component for deadline type
 function getDeadlineIcon(type: Deadline['type']) {
@@ -370,21 +371,100 @@ function DeadlineSection({ title, deadlines, isPast = false, isCollapsible = tru
 }
 
 export default function PreparationPage() {
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(mockCourses[0].id);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [deadlines, setDeadlines] = useState<any[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
-  
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch courses and deadlines
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch courses
+        const coursesResponse = await fetch('/api/courses');
+        const coursesData = await coursesResponse.json();
+        
+        if (coursesData.success && coursesData.courses?.length > 0) {
+          // Map courses to the format we need
+          const formattedCourses = coursesData.courses.map((course: any) => ({
+            id: course.course_id,
+            name: course.course_name,
+            code: course.course_code,
+            color: getRandomColor(course.course_id), // Generate a color based on course_id
+            term: course.term,
+            upcomingDeadlines: [] // Will populate with deadlines
+          }));
+          
+          // Sort courses by course_id numerically
+          formattedCourses.sort((a: any, b: any) => {
+            const aId = parseInt(a.id);
+            const bId = parseInt(b.id);
+            return aId - bId;
+          });
+          
+          setCourses(formattedCourses);
+          // Set the first course as selected by default
+          setSelectedCourseId(formattedCourses[0].id);
+          
+          // Fetch deadlines
+          const deadlinesResponse = await fetch('/api/deadlines');
+          const deadlinesData = await deadlinesResponse.json();
+          
+          if (deadlinesData.success) {
+            setDeadlines(deadlinesData.deadlines);
+          }
+        } else {
+          setError('Failed to fetch courses');
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+  // Generate a random color based on course_id for consistency
+  function getRandomColor(courseId: string) {
+    // Predefined ASU colors
+    const colors = [
+      '#8C1D40', // ASU Maroon
+      '#FF6900', // ASU Orange
+      '#00A3E0', // ASU Blue
+      '#78BE20', // ASU Green
+      '#6B46C1', // Purple
+      '#1E429F', // Navy
+      '#9B2FAE'  // Pink
+    ];
+    
+    // Use the courseId to select a color deterministically
+    const colorIndex = parseInt(courseId) % colors.length;
+    return colors[colorIndex];
+  }
+
   // Get selected course
-  const selectedCourse = mockCourses.find(course => course.id === selectedCourseId) || mockCourses[0];
+  const selectedCourse = courses.find(course => course.id === selectedCourseId) || (courses.length > 0 ? courses[0] : null);
 
   // Prepare deadlines for display
   const getDeadlines = () => {
-    // Only show deadlines for the selected course
-    return selectedCourse.upcomingDeadlines.map(deadline => ({
-      ...deadline,
-      courseName: selectedCourse.name,
-      courseCode: selectedCourse.code,
-      courseColor: selectedCourse.color
-    }));
+    if (!selectedCourse) return [];
+    
+    // Filter deadlines for the selected course
+    return deadlines
+      .filter((deadline: any) => deadline.courseId === selectedCourse.id)
+      .map((deadline: any) => ({
+        ...deadline,
+        courseName: selectedCourse.name,
+        courseCode: selectedCourse.code,
+        courseColor: selectedCourse.color,
+        // Ensure dueDate is a Date object
+        dueDate: deadline.dueDate ? new Date(deadline.dueDate) : new Date()
+      }));
   };
   
   const allDeadlines = getDeadlines();
@@ -415,6 +495,46 @@ export default function PreparationPage() {
     { value: 'discussion', label: 'Discussions', count: getTypeCount('discussion') }
   ];
 
+  if (isLoading) {
+    return (
+      <div className="px-8 py-6">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-8 bg-[#FFC627] rounded-sm"></div>
+            <h2 className="text-xl font-semibold text-gray-800">Your Courses</h2>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg overflow-hidden shadow-md p-8">
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-asu-maroon mb-4"></div>
+            <p className="text-gray-600">Loading your courses and deadlines...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  if (error || !selectedCourse) {
+    return (
+      <div className="px-8 py-6">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-1.5 h-8 bg-[#FFC627] rounded-sm"></div>
+            <h2 className="text-xl font-semibold text-gray-800">Your Courses</h2>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-lg overflow-hidden shadow-md p-8">
+          <div className="flex flex-col items-center justify-center h-64">
+            <p className="text-red-500 font-medium mb-2">{error || 'No courses found'}</p>
+            <p className="text-gray-500">Please try again later or contact support.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="px-8 py-6">
       {/* Course Tabs */}
@@ -429,7 +549,7 @@ export default function PreparationPage() {
         <div className="bg-white rounded-lg overflow-hidden shadow-md">
           <div className="border-b border-gray-200">
             <div className="flex overflow-x-auto">
-              {mockCourses.map(course => (
+              {courses.map(course => (
                 <button
                   key={course.id}
                   onClick={() => setSelectedCourseId(course.id)}

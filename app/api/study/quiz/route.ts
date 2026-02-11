@@ -4,6 +4,8 @@ import { detectLearningGaps } from '@/lib/learning-gaps';
 import { QuizSet } from '@/types';
 import { promises as fs } from 'fs';
 import path from 'path';
+// Import quiz prompts
+import { quiz } from '@/prompts';
 
 // Define interfaces for quiz generation request
 interface QuizRequest {
@@ -102,47 +104,12 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Set up system prompt and user prompt
-    const systemPrompt = `You are an expert educational content creator specializing in generating multiple choice quiz questions for college-level learning.
+    // Set up system prompt and user prompt using imported templates
+    const systemPrompt = quiz.quizSystemPrompt;
     
-Your task is to create high-quality multiple choice questions that test understanding of the requested topic. Each question should have exactly 4 options with clear explanations for why each option is correct or incorrect.
-
-IMPORTANT: You MUST respond with ONLY valid JSON. Do not include any markdown formatting, code blocks, or explanatory text. Your entire response should be parseable as JSON.
-
-Guidelines:
-- Create questions with appropriate depth based on the requested difficulty level
-- For basic difficulty: Test fundamental concepts and definitions
-- For intermediate difficulty: Test application of concepts and relationships between ideas
-- For advanced difficulty: Test analysis, synthesis, and complex problem-solving
-- Each question should have exactly 4 options (A, B, C, D)
-- Only one option should be correct
-- Provide clear explanations for why each option is correct or incorrect
-- Avoid trick questions or ambiguous wording
-- Format the response as a valid JSON object with this exact structure:
-  {
-    "questions": [
-      {
-        "question": "The question text",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "correctAnswer": 0,
-        "explanation": "Detailed explanation of why the correct answer is correct and why the other options are incorrect"
-      }
-    ]
-  }
-
-Note: correctAnswer is the zero-based index of the correct option (0 for A, 1 for B, 2 for C, 3 for D)
-
-Generate 10 multiple choice questions for the requested topic.
-
-IMPORTANT: Your response MUST be valid JSON without any markdown formatting or additional text.`;
-
-    const userPrompt = `Generate 10 ${difficulty} level multiple choice questions about "${topic}" for a college course${
-      courseId ? ` (Course ID: ${courseId})` : ''
-    }. ${
-      generationType === 'learning_gaps' 
-        ? 'Focus on areas where the student has shown weaknesses.' 
-        : 'Cover the topic comprehensively.'
-    }${knowledgeContext}`;
+    const userPrompt = generationType === 'learning_gaps'
+      ? quiz.learningGapsUserPrompt(topic, difficulty, courseId, knowledgeContext)
+      : quiz.generalContentUserPrompt(topic, difficulty, courseId, knowledgeContext);
     
     // Set up options for CreateAI API
     const options = {
