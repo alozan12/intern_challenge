@@ -285,7 +285,7 @@ IMPORTANT: Your response MUST be valid JSON without any markdown formatting or a
           responseData = JSON.parse(responseText);
           console.log('Parsed response directly as JSON');
         } catch (initialParseError) {
-          console.log('Direct JSON parse failed:', initialParseError.message);
+          console.log('Direct JSON parse failed:', initialParseError instanceof Error ? initialParseError.message : initialParseError);
           
           // STEP 2: Extract JSON from markdown code blocks
           if (responseText.includes('```json') || responseText.includes('```')) {

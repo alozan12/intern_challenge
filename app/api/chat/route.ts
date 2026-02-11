@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Get learning gaps and student information
-    const learningGapsData = getLearningGaps(studentId, courseId);
+    const learningGapsData = getLearningGaps(studentId || '', courseId);
     
     // Get student profile information
     const studentProfile = studentProfileData.student;
@@ -111,8 +111,8 @@ export async function POST(req: NextRequest) {
       if (learningGapsData && typeof learningGapsData === 'object' && Object.keys(learningGapsData).length > 0) {
         systemPrompt += '\n\nThe student has shown learning gaps in the following areas:';
         
-        const gapTopics = Array.isArray(learningGapsData.gaps)
-          ? learningGapsData.gaps.map((gap: any) => gap.topic)
+        const gapTopics = Array.isArray((learningGapsData as any).gaps)
+          ? (learningGapsData as any).gaps.map((gap: any) => gap.topic)
           : [];
           
         if (gapTopics.length > 0) {
@@ -163,8 +163,7 @@ export async function POST(req: NextRequest) {
           modelName: options.modelName,
           sessionId: options.sessionId,
           temperature: options.temperature,
-          enableSearch: options.enableSearch,
-          searchParams: options.searchParams
+          enableSearch: options.enableSearch
         }
       });
       

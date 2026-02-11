@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
         id: item.item_id,
         title: item.title,
         type: item.item_type as 'assignment' | 'quiz' | 'exam' | 'discussion',
-        dueDate: new Date(item.due_date),
+        dueDate: new Date(item.due_date || ''),
         courseId: item.course_id
       }));
     
@@ -252,15 +252,6 @@ export async function POST(req: NextRequest) {
       
       return NextResponse.json(responseData);
     }
-    
-    // Process API response
-    const responseData: InsightsResponse = {
-      type: insightType,
-      data: response.data || getMockInsights(insightType),
-      timestamp: new Date().toISOString()
-    };
-    
-    return NextResponse.json(responseData);
   } catch (error) {
     console.error('Error in insights API:', error);
     return NextResponse.json(
