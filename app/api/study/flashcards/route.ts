@@ -303,7 +303,7 @@ IMPORTANT: Your response MUST be valid JSON without any markdown formatting or a
                 responseData = JSON.parse(jsonMatch[1]);
                 console.log('Successfully parsed JSON from code block');
               } catch (blockParseError) {
-                console.error('Error parsing JSON from code block:', blockParseError.message);
+                console.error('Error parsing JSON from code block:', blockParseError instanceof Error ? blockParseError.message : blockParseError);
                 // Continue to next method
               }
             }
@@ -321,7 +321,7 @@ IMPORTANT: Your response MUST be valid JSON without any markdown formatting or a
               responseData = JSON.parse(possibleJson);
               console.log('Successfully extracted JSON from text content');
             } catch (extractParseError) {
-              console.error('Error parsing extracted JSON:', extractParseError.message);
+              console.error('Error parsing extracted JSON:', extractParseError instanceof Error ? extractParseError.message : extractParseError);
               // Continue to next method
             }
           }
@@ -349,7 +349,7 @@ IMPORTANT: Your response MUST be valid JSON without any markdown formatting or a
                   console.log('Created structured cards from text:', extractedCards.length);
                 }
               } catch (regexError) {
-                console.error('Error extracting cards with regex:', regexError.message);
+                console.error('Error extracting cards with regex:', regexError instanceof Error ? regexError.message : regexError);
               }
             }
           }
@@ -362,8 +362,8 @@ IMPORTANT: Your response MUST be valid JSON without any markdown formatting or a
       
       // Debug the response structure
       console.log('Response data structure:', {
-        hasCards: !!responseData.cards,
-        isCardsArray: Array.isArray(responseData.cards),
+        hasCards: !!(responseData as any).cards,
+        isCardsArray: Array.isArray((responseData as any).cards),
         responseKeys: Object.keys(responseData),
         firstLevel: JSON.stringify(responseData).substring(0, 200)
       });
@@ -371,12 +371,12 @@ IMPORTANT: Your response MUST be valid JSON without any markdown formatting or a
       // Try to find cards in different possible locations in the response
       let cards = [];
       
-      if (Array.isArray(responseData.cards)) {
+      if (Array.isArray((responseData as any).cards)) {
         console.log('Found cards in responseData.cards');
-        cards = responseData.cards;
-      } else if (responseData.response && typeof responseData.response === 'object' && Array.isArray(responseData.response.cards)) {
+        cards = (responseData as any).cards;
+      } else if ((responseData as any).response && typeof (responseData as any).response === 'object' && Array.isArray((responseData as any).response.cards)) {
         console.log('Found cards in responseData.response.cards');
-        cards = responseData.response.cards;
+        cards = (responseData as any).response.cards;
       } else if (typeof responseData === 'string') {
         try {
           const parsedString = JSON.parse(responseData);

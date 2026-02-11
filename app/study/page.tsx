@@ -7,6 +7,7 @@ import { FlashcardSet } from '@/components/study-materials/FlashcardSet'
 import { FlashcardGenerator } from '@/components/study-materials/FlashcardGenerator'
 import { Course, FlashcardSet as FlashcardSetType } from '@/types'
 import { BookOpen, Book, FlaskConical, Zap, Brain, Files, Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 // Mock data for study materials (in a real app, this would come from an API)
 const mockCourses: Course[] = [
@@ -196,13 +197,22 @@ export default function StudyPage() {
             <TabsTrigger 
               key={course.id} 
               value={course.id}
-              className="data-[state=active]:shadow-sm data-[state=active]:text-white"
-              style={{
-                backgroundColor: course.id === activeCourseId ? course.color : 'transparent',
-                color: course.id === activeCourseId ? 'white' : 'inherit'
-              }}
+              className={cn(
+                "data-[state=active]:shadow-sm",
+                course.id === activeCourseId && "text-white"
+              )}
             >
-              {course.code}
+              <span
+                style={{
+                  backgroundColor: course.id === activeCourseId ? course.color : 'transparent',
+                  color: course.id === activeCourseId ? 'white' : 'inherit',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.375rem',
+                  display: 'block'
+                }}
+              >
+                {course.code}
+              </span>
             </TabsTrigger>
           ))}
         </TabsList>

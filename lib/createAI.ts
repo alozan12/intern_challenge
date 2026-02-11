@@ -210,7 +210,7 @@ export async function queryCreateAI<T = any>(query: string, options: {
     } = options;
     
     // Build the request payload for direct query format
-    const payload = {
+    const payload: any = {
       action: 'query',
       request_source: 'override_params',
       query,
@@ -220,7 +220,7 @@ export async function queryCreateAI<T = any>(query: string, options: {
       model_params: {
         temperature,
         stream
-      }
+      } as any
     };
     
     // Add system prompt if provided

@@ -50,7 +50,7 @@ export function createWebSocketPayload(query: string, options: {
   } = options;
 
   // Build the WebSocket payload using the format for direct query
-  const payload: WebSocketPayload = {
+  const payload: WebSocketPayload & { request_source?: string } = {
     action: 'query',
     request_source: 'override_params',
     session_id: sessionId,
