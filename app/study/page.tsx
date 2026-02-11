@@ -9,6 +9,9 @@ import { Course, FlashcardSet as FlashcardSetType } from '@/types'
 import { BookOpen, Book, FlaskConical, Zap, Brain, Files, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 // Mock data for study materials (in a real app, this would come from an API)
 const mockCourses: Course[] = [
   {
@@ -131,8 +134,8 @@ const mockFlashcardSets: FlashcardSetType[] = [
 export default function StudyPage() {
   // Get course and topic from query parameters
   const searchParams = useSearchParams()
-  const courseId = searchParams.get('course') || ''
-  const topic = searchParams.get('topic') || ''
+  const courseId = searchParams?.get('course') || ''
+  const topic = searchParams?.get('topic') || ''
   
   // State for active course and selected flashcard set
   const [activeCourseId, setActiveCourseId] = useState(courseId || mockCourses[0].id)
