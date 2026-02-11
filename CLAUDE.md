@@ -63,7 +63,7 @@ The ASU Study Coach is an AI-powered study assistant application built with Next
 ### Landing Page
 - Quick access dashboard with modular design
 - Filtered deadlines view as primary content:
-  - Chronological list of all upcoming deadlines across courses
+  - Chronological list of all upcoming deadlines within a 14-day window
   - Search functionality for deadline title and course name
   - Dropdown filters for course and assignment type (assignments, quizzes, exams, discussions)
   - Color-coded deadline types and course indicators
@@ -99,7 +99,9 @@ Three-panel layout:
 ### Calendar Page
 - Full calendar view of academic schedule
 - Visual indicators for deadlines and events
-- Click interaction to navigate to specific dates
+- Click interaction to view deadline details in a modal
+- "View in Canvas" links to original Canvas assignments
+- "Prepare for This" links to preparation pages
 
 ## Development Commands
 ```bash
@@ -150,6 +152,16 @@ npm test
 - Read-only API access to Canvas data
 - AI guardrails to prevent misuse
 - Privacy-preserving data handling
+- PostgreSQL database integration
+
+## Database Integration
+- PostgreSQL database connection in `/lib/db.ts`
+- Tables: courses, course_items, course_materials, students, enrollments, etc.
+- API endpoints for data access:
+  - `/api/courses` - Fetch enrolled courses for a student
+  - `/api/deadlines` - Fetch all deadlines with related course information
+  - `/api/courses/[courseId]/materials` - Fetch course materials for a specific course
+- Optimized SQL queries with proper JOIN operations
 
 ## Code Style and Conventions
 This project follows the coding patterns and conventions defined in the style_guide.md file. Refer to this document for detailed guidelines on:

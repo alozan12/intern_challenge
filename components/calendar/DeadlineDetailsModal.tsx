@@ -157,14 +157,13 @@ export function DeadlineDetailsModal({ deadline, onClose, isOpen }: DeadlineDeta
             >
               Prepare for This
             </Link>
-            {/* Find the first related material with canvas_url to use as the Canvas link */}
             <a 
-              href={courseMaterials.length > 0 && courseMaterials[0].canvas_url ? courseMaterials[0].canvas_url : '#'} 
+              href={deadline.canvas_url || '#'} 
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
                 "ml-2 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors",
-                (!courseMaterials.length || !courseMaterials[0].canvas_url) && "opacity-50 cursor-not-allowed"
+                !deadline.canvas_url && "opacity-50 cursor-not-allowed"
               )}
             >
               View in Canvas

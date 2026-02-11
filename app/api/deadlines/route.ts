@@ -10,10 +10,12 @@ export async function GET() {
     // Query to get all course items with due dates
     const deadlinesResult = await query(`
       SELECT ci.item_id, ci.course_id, ci.item_type, ci.title, ci.due_date, 
-             ci.points_possible, ci.latest_score,
-             c.course_code, c.course_name
+             ci.points_possible, ci.latest_score, ci.material_id,
+             c.course_code, c.course_name,
+             cm.canvas_url
       FROM course_items ci
       JOIN courses c ON ci.course_id = c.course_id
+      LEFT JOIN course_materials cm ON ci.material_id = cm.material_id
       WHERE ci.student_id = $1
       ORDER BY ci.due_date ASC;
     `, [CURRENT_STUDENT_ID]);
@@ -115,7 +117,9 @@ export async function GET() {
         courseName: item.course_name,
         courseCode: item.course_code,
         pointsPossible: item.points_possible,
-        latestScore: item.latest_score
+        latestScore: item.latest_score,
+        materialId: item.material_id,
+        canvas_url: item.canvas_url
       };
     });
     
