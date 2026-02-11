@@ -41,6 +41,40 @@ export function AIInsights() {
         dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
         type: 'quiz'
       }
+    },
+    {
+      id: '3',
+      title: 'Master APA Citations',
+      description: 'You did well on the APA quiz, but let\'s reinforce in-text citations before your essay draft.',
+      duration: 10,
+      type: 'strengthen',
+      courseId: '3',
+      courseName: 'English Composition',
+      courseCode: 'ENG 101',
+      topic: 'In-text Citations',
+      deadline: {
+        id: '4',
+        title: 'Essay Draft',
+        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        type: 'assignment'
+      }
+    },
+    {
+      id: '4',
+      title: 'Deep Dive: Molecular Orbital Theory',
+      description: 'Based on your quiz performance, focus on molecular orbital theory and hybridization concepts.',
+      duration: 30,
+      type: 'review',
+      courseId: '4',
+      courseName: 'General Chemistry',
+      courseCode: 'CHM 113',
+      topic: 'Molecular Orbital Theory',
+      deadline: {
+        id: '6',
+        title: 'Lab Report 4',
+        dueDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
+        type: 'assignment'
+      }
     }
   ];
   
@@ -185,7 +219,7 @@ export function AIInsights() {
   }
   
   return (
-    <div className="bg-[#FFF8E8] rounded-lg shadow-sm border border-[#FFC627]/30 p-4">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className="p-1 bg-[#FFC627]/20 rounded-md">
@@ -252,7 +286,7 @@ export function AIInsights() {
           insights.map((insight) => (
             <div 
               key={insight.id}
-              className="bg-white rounded-lg p-4 shadow-sm"
+              className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
             >
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-4 h-4 flex-shrink-0">

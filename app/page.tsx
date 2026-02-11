@@ -2,12 +2,13 @@
 
 import { DeadlinesSection } from '@/components/landing/DeadlinesSection'
 import { ActivityStreak } from '@/components/landing/ActivityStreak'
-import { ClickableAnalyticsCard } from '@/components/landing/ClickableAnalyticsCard'
+import { AnalyticsCarousel } from '@/components/landing/AnalyticsCarousel'
 import { PreviousSessionCard } from '@/components/landing/PreviousSessionCard'
 import { AIInsights } from '@/components/landing/AIInsights'
 import { MiniCalendar } from '@/components/landing/MiniCalendar'
 import { Course, Deadline, Analytics } from '@/types'
 import { SunMedium } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 // Mock data - in a real app, this would come from an API
 const mockCourses: Course[] = [
@@ -180,55 +181,74 @@ const mockAnalytics: Analytics = {
 const allDeadlines: Deadline[] = mockCourses.flatMap(course => course.upcomingDeadlines)
 
 export default function LandingPage() {
+  // Animation variants for staggered animations
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring" as const,
+        stiffness: 100,
+        damping: 12
+      }
+    }
+  };
+
   return (
-    <div className="p-4">
-      {/* Page content without the greeting */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="w-1.5 h-8 bg-[#FFC627] rounded-sm"></div>
+    <div className="p-6 bg-gray-50">
+      {/* Page header with subtle animation */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-6 flex items-center gap-3"
+      >
+        <div className="w-1.5 h-8 bg-asu-gold rounded-sm"></div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-      </div>
+      </motion.div>
       
-      <div className="flex flex-col lg:flex-row gap-4 max-w-full overflow-hidden">
-        {/* Left Section: Cards and AI Insights (66% width) */}
-        <section className="w-full lg:w-2/3">
-          {/* Top cards - three columns */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-            <div className="h-[200px]">
-              <ActivityStreak daysInARow={mockAnalytics.studyStreak} />
-            </div>
-            <div className="h-[200px]">
-              <ClickableAnalyticsCard />
-            </div>
-            <div className="h-[200px]">
-              <PreviousSessionCard 
-                level={mockAnalytics.level || 'N/A'} 
-                progress={mockAnalytics.levelProgress || 0} 
-                lastTested={mockAnalytics.lastTested || 'Never'} 
-              />
-            </div>
-          </div>
-          
-          {/* AI Insights */}
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex flex-col lg:flex-row gap-6 max-w-full overflow-hidden">
+        {/* Left Section: AI Insights (66% width) */}
+        <motion.section 
+          variants={itemVariants}
+          className="w-full lg:w-2/3"
+        >
           <AIInsights />
-        </section>
+        </motion.section>
 
         {/* Right Section: Deadlines (33% width) */}
-        <aside className="w-full lg:w-1/3 lg:self-start lg:sticky lg:top-4">
-          <div className="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200">
+        <motion.aside 
+          variants={itemVariants}
+          className="w-full lg:w-1/3"
+        >
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Upcoming Deadlines</h2>
             </div>
-            <div className="flex-grow flex flex-col">
-              <div className="flex-grow">
-                <DeadlinesSection courses={mockCourses} showTitle={false} />
-              </div>
-              <div className="p-4 pt-0">
+            <div className="flex flex-col">
+              <DeadlinesSection courses={mockCourses} showTitle={false} />
+              <div className="p-4 pt-0 border-t-2 border-gray-300">
                 <MiniCalendar deadlines={allDeadlines} />
               </div>
             </div>
           </div>
-        </aside>
-      </div>
+        </motion.aside>
+      </motion.div>
     </div>
   )
 }

@@ -123,47 +123,12 @@ export async function POST(req: NextRequest) {
       response
     });
   } catch (error) {
-      // Initial state
-      initialMemory: {
-        messages: messages || [],
-        studentId,
-        courseId,
-        preparationPageId
-      },
-      // Available tools for the agent
-      tools: {
-        // Get student profile tool
-        getStudentProfile: async ({ studentId }: { studentId: string }): Promise<StudentProfile> => {
-          // In a real implementation, this would query the database
-          // For now, we'll return mock data
-          return {
-            id: studentId,
-            name: 'Jordan Student',
-            email: 'student@asu.edu',
-            courses: [
-              { id: '112233', code: 'CSE310', name: 'Data Structures & Algorithms' }
-            ]
-          };
-        },
-        // Get student performance tool
-        getStudentPerformance: async ({ studentId, courseId }: { studentId: string; courseId: string }): Promise<StudentPerformance> => {
-          // This would query the database or CreateAI knowledge base
-          // For now, we'll return mock data
-          return {
-            studentId,
-            courseId,
-            items: [
-              {
-                itemId: '5002',
-                title: 'Quiz 2: Trees',
-                type: 'quiz',
-                attemptsCount: 2,
-                latestScore: 16,
-                possiblePoints: 20
-              }
-            ]
-          };
-        },
+    console.error('Error in agent API:', error);
+    return NextResponse.json(
+      { error: 'Failed to process request' },
+      { status: 500 }
+    );
+  }
 }
 
 /**
@@ -202,12 +167,4 @@ async function getStudentPerformance(studentId: string, courseId: string): Promi
       }
     ]
   };
-}
-  } catch (error) {
-    console.error('Error in agent API:', error);
-    return NextResponse.json(
-      { error: 'Failed to process request' },
-      { status: 500 }
-    );
-  }
 }

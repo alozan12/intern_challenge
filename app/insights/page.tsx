@@ -4,27 +4,35 @@ import React from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { InsightsList } from '@/components/insights/InsightsList'
+import { motion } from 'framer-motion'
 
 export default function InsightsPage() {
   return (
-    <div className="container max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Page header with consistent styling */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-6"
+      >
         <Link 
           href="/" 
-          className="text-[#8C1D40] hover:underline flex items-center gap-1 mb-2"
+          className="text-[#8C1D40] hover:underline flex items-center gap-1 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Dashboard</span>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">AI Study Insights</h1>
-        <p className="text-gray-600 mt-1">
-          Personalized recommendations based on your academic performance and upcoming deadlines
-        </p>
-      </div>
+      </motion.div>
       
-      <div className="mb-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="max-w-5xl mx-auto"
+      >
         <InsightsList count={10} />
-      </div>
+      </motion.div>
     </div>
   )
 }
