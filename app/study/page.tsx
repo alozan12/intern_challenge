@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { FlashcardSet } from '@/components/study-materials/FlashcardSet'
@@ -130,8 +130,8 @@ const mockFlashcardSets: FlashcardSetType[] = [
   }
 ]
 
-// Study mode page component
-export default function StudyPage() {
+// Study page content that uses search params
+function StudyPageContent() {
   // Get course and topic from query parameters
   const searchParams = useSearchParams()
   const courseId = searchParams?.get('course') || ''
@@ -353,5 +353,26 @@ export default function StudyPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// Loading component for Suspense
+function StudyPageLoading() {
+  return (
+    <div className="p-4 max-w-screen-2xl mx-auto">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Study Materials</h1>
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    </div>
+  )
+}
+
+// Main component with Suspense wrapper
+export default function StudyPage() {
+  return (
+    <Suspense fallback={<StudyPageLoading />}>
+      <StudyPageContent />
+    </Suspense>
   )
 }
