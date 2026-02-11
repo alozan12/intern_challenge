@@ -12,12 +12,12 @@ export async function POST(request: Request) {
     
     // Generate strengths based on correct answers
     const strengths = correctQuestions.length > 0 
-      ? correctQuestions.slice(0, 3).map(q => q.question.split('?')[0].trim())
+      ? correctQuestions.slice(0, 3).map((q: any) => q.question.split('?')[0].trim())
       : ['No specific strengths identified'];
     
     // Generate weaknesses based on incorrect answers
     const weaknesses = incorrectQuestions.length > 0
-      ? incorrectQuestions.slice(0, 3).map(q => q.question.split('?')[0].trim())
+      ? incorrectQuestions.slice(0, 3).map((q: any) => q.question.split('?')[0].trim())
       : ['No specific weaknesses identified'];
     
     // Generate recommendations based on score and time spent

@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { FlashcardSet } from '@/components/study-materials/FlashcardSet'
 import { FlashcardGenerator } from '@/components/study-materials/FlashcardGenerator'
 import { Course, FlashcardSet as FlashcardSetType } from '@/types'
-import { BookOpen, BookText, FlaskConical, Zap, Brain, Files, Plus } from 'lucide-react'
+import { BookOpen, Book, FlaskConical, Zap, Brain, Files, Plus } from 'lucide-react'
 
 // Mock data for study materials (in a real app, this would come from an API)
 const mockCourses: Course[] = [
@@ -235,7 +235,7 @@ export default function StudyPage() {
                     <ul className="space-y-2">
                       {course.upcomingTopics?.map(topic => (
                         <li key={topic} className="flex items-center gap-2">
-                          <BookText className="w-4 h-4 text-blue-500" />
+                          <Book className="w-4 h-4 text-blue-500" />
                           <span className="text-sm text-gray-600">{topic}</span>
                         </li>
                       ))}
