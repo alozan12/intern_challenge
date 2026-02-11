@@ -67,17 +67,52 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
     setInput('')
     setIsLoading(true)
 
-    // Simulate AI response - replace with actual API call
-    setTimeout(() => {
+    try {
+      // Call our API endpoint
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content })),
+          studentId: '987654', // Example student ID
+          courseId: courseId,
+          stream: false,
+          // Added for error handling
+          fallbackToMock: true
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from AI')
+      }
+
+      const data = await response.json()
+      
       const aiMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'I understand you want to learn about that topic. Let me help you understand the key concepts...',
+        content: data.response,
         timestamp: new Date()
       }
+      
       setMessages(prev => [...prev, aiMessage])
+    } catch (error) {
+      console.error('Error getting AI response:', error)
+      
+      // Fallback response if API fails
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'I apologize, but I\'m having trouble connecting to my knowledge base right now. Please try again in a moment.',
+        timestamp: new Date()
+      }
+      
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -97,7 +132,7 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
             <p className={cn("text-gray-600", viewMode === 'compact' ? 'text-xs' : 'text-sm')}>Ask questions about your course content</p>
           </div>
           <button 
-            onClick={() => {
+            onClick={async () => {
               console.log('Starting new session');
               // Only save session if it has user messages
               if (messages.length > 1) {
@@ -106,10 +141,46 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                 setPastSessions(prev => [...prev, [...messages]]);
               }
               
-              // Start a new session with initial AI greeting
-              const newInitialMessage = createInitialMessage();
-              console.log('New initial message', newInitialMessage);
-              setMessages([newInitialMessage]);
+              setIsLoading(true);
+              
+              try {
+                // Get a personalized greeting from the API
+                const response = await fetch('/api/chat', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    messages: [{
+                      role: 'user',
+                      content: `Please provide a greeting as an AI Study Coach for ${courseInfo.code} course. Introduce yourself and ask how you can help.`
+                    }],
+                    studentId: '987654', // Example student ID
+                    courseId: courseId
+                  }),
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  const newInitialMessage = {
+                    id: Date.now().toString(),
+                    role: 'assistant' as const,
+                    content: data.response,
+                    timestamp: new Date()
+                  };
+                  setMessages([newInitialMessage]);
+                } else {
+                  // Fallback to default greeting if API call fails
+                  const newInitialMessage = createInitialMessage();
+                  setMessages([newInitialMessage]);
+                }
+              } catch (error) {
+                console.error('Error getting initial greeting:', error);
+                const newInitialMessage = createInitialMessage();
+                setMessages([newInitialMessage]);
+              } finally {
+                setIsLoading(false);
+              }
             }}
             className={cn(
               "text-white rounded-md hover:bg-red-900 transition-colors flex items-center gap-1 bg-asu-maroon",

@@ -1,0 +1,289 @@
+{
+  "courses": [
+    {
+      "course_id": "112233",
+      "course_code": "CSE310",
+      "course_name": "Data Structures & Algorithms",
+      "materials": [
+        {
+          "material_id": "mat001",
+          "material_type": "lecture_notes",
+          "title": "Introduction to Data Structures",
+          "content": "Data structures are specialized formats for organizing and storing data. Different data structures are suited to different kinds of applications, and some are highly specialized to specific tasks. Data structures provide a means to manage large amounts of data efficiently for uses such as large databases and internet indexing services.",
+          "topics": ["data structures", "introduction", "complexity"],
+          "week": 1
+        },
+        {
+          "material_id": "mat002",
+          "material_type": "lecture_notes",
+          "title": "Arrays and Linked Lists",
+          "content": "Arrays store elements in contiguous memory locations, resulting in easily calculable addresses for the elements, and this allows faster access to an element at a specific index. Linked lists are linear collections of data elements whose order is not given by their physical placement in memory. Instead, each element points to the next.",
+          "topics": ["arrays", "linked lists", "memory allocation"],
+          "week": 2
+        },
+        {
+          "material_id": "mat003",
+          "material_type": "lecture_notes",
+          "title": "Binary Trees and BSTs",
+          "content": "A binary tree is a tree data structure in which each node has at most two children, referred to as the left child and the right child. A binary search tree (BST) is a binary tree in which nodes are ordered in the following way: The key in each node must be greater than all keys stored in the left subtree, and less than all keys in right subtree.",
+          "topics": ["binary trees", "BSTs", "tree traversal"],
+          "week": 3
+        },
+        {
+          "material_id": "mat004",
+          "material_type": "lecture_notes",
+          "title": "Balanced Trees",
+          "content": "Balanced trees are binary trees that maintain their balance to ensure O(log n) operations. Common balanced tree types include AVL trees and Red-Black trees. In an AVL tree, the heights of the two child subtrees of any node differ by at most one. Red-Black trees use color properties to maintain balance during insertions and deletions.",
+          "topics": ["balanced trees", "AVL trees", "red-black trees"],
+          "week": 3
+        },
+        {
+          "material_id": "mat005",
+          "material_type": "lecture_notes",
+          "title": "Graph Theory Basics",
+          "content": "A graph is a non-linear data structure consisting of nodes and edges. Nodes are also called vertices, and edges are lines or arcs that connect any two nodes in the graph. Graphs can be represented using an adjacency matrix or adjacency list. Common graph algorithms include breadth-first search (BFS) and depth-first search (DFS).",
+          "topics": ["graphs", "vertices", "edges", "adjacency matrix", "adjacency list"],
+          "week": 4
+        },
+        {
+          "material_id": "mat006",
+          "material_type": "lecture_notes",
+          "title": "Graph Traversal Algorithms",
+          "content": "Graph traversal refers to the process of visiting each vertex in a graph. Breadth-First Search (BFS) starts at a selected node and explores all neighbor nodes at the present depth before moving to nodes at the next depth level. Depth-First Search (DFS) starts at a selected node and explores as far as possible along each branch before backtracking.",
+          "topics": ["graph traversal", "BFS", "DFS", "algorithms"],
+          "week": 4
+        },
+        {
+          "material_id": "mat007",
+          "material_type": "lecture_notes",
+          "title": "Shortest Path Algorithms",
+          "content": "Shortest path algorithms are used to find the shortest path between two nodes in a graph. Dijkstra's algorithm finds the shortest path from a single source vertex to all other vertices. Bellman-Ford algorithm also finds shortest paths but can handle graphs with negative edge weights. Floyd-Warshall algorithm finds shortest paths between all pairs of vertices.",
+          "topics": ["shortest path", "Dijkstra's algorithm", "Bellman-Ford", "Floyd-Warshall"],
+          "week": 5
+        },
+        {
+          "material_id": "mat101",
+          "material_type": "reading",
+          "title": "Algorithm Complexity Analysis",
+          "content": "Algorithm complexity is a measure of the amount of time and/or space required by an algorithm for an input of a given size. Big O notation is used to classify algorithms according to how their running time or space requirements grow as the input size grows. Common complexities include O(1) for constant time, O(log n) for logarithmic time, O(n) for linear time, and O(n²) for quadratic time.",
+          "topics": ["complexity", "Big O notation", "time complexity", "space complexity"],
+          "week": 1
+        },
+        {
+          "material_id": "mat102",
+          "material_type": "reading",
+          "title": "Tree Balancing Techniques",
+          "content": "Tree balancing is essential for maintaining O(log n) time complexity in binary search trees. AVL trees use rotation operations to maintain balance whenever the height difference between left and right subtrees exceeds one. Red-Black trees use color properties and rotations to maintain balance. B-trees and B+ trees are self-balancing tree data structures that maintain sorted data and allow searches, insertions, and deletions in logarithmic time.",
+          "topics": ["tree balancing", "rotations", "AVL trees", "red-black trees", "B-trees"],
+          "week": 3
+        },
+        {
+          "material_id": "mat201",
+          "material_type": "assignment_instructions",
+          "title": "Assignment 1: Array and Linked List Implementation",
+          "content": "Implement both an array-based and linked list-based solution for a simple task list application. Compare the performance of both implementations for various operations including insertion, deletion, and searching. Include proper analysis of time and space complexity for each operation in both implementations.",
+          "due_date": "2026-01-22T23:59:59Z",
+          "points": 20,
+          "topics": ["arrays", "linked lists", "implementation", "complexity analysis"],
+          "week": 2
+        },
+        {
+          "material_id": "mat202",
+          "material_type": "assignment_instructions",
+          "title": "Assignment 2: Binary Search Tree Implementation",
+          "content": "Implement a binary search tree with the following operations: insert, delete, search, and traversal (in-order, pre-order, post-order). Your implementation should handle edge cases such as inserting duplicates, deleting non-existent nodes, and operating on empty trees. Include proper error handling and thorough testing.",
+          "due_date": "2026-02-05T23:59:59Z",
+          "points": 20,
+          "topics": ["BST", "implementation", "edge cases", "traversal"],
+          "week": 3
+        },
+        {
+          "material_id": "mat203",
+          "material_type": "assignment_instructions",
+          "title": "Assignment 3: Graph Algorithms",
+          "content": "Implement graph representation using both adjacency matrix and adjacency list. Implement BFS and DFS traversal algorithms, as well as Dijkstra's shortest path algorithm. Compare the performance and memory usage of your implementations with different graph sizes and densities.",
+          "due_date": "2026-02-20T23:59:59Z",
+          "points": 30,
+          "topics": ["graph representation", "BFS", "DFS", "Dijkstra's algorithm"],
+          "week": 5
+        },
+        {
+          "material_id": "mat301",
+          "material_type": "quiz_instructions",
+          "title": "Quiz 1: Arrays and Linked Lists",
+          "content": "This quiz covers fundamental concepts of arrays and linked lists, including time and space complexity analysis, advantages and disadvantages of each data structure, and common operations. Be prepared to analyze and compare both data structures in various scenarios.",
+          "due_date": "2026-01-15T23:59:59Z",
+          "points": 20,
+          "topics": ["arrays", "linked lists", "complexity analysis"],
+          "week": 2
+        },
+        {
+          "material_id": "mat302",
+          "material_type": "quiz_instructions",
+          "title": "Quiz 2: Trees",
+          "content": "This quiz covers binary trees, binary search trees, and tree traversal algorithms. Topics include time complexity of operations, balancing techniques, and tree traversal methods. Be prepared to analyze tree structures and operations in various scenarios.",
+          "due_date": "2026-02-01T23:59:59Z",
+          "points": 20,
+          "topics": ["binary trees", "BST", "tree traversal", "tree balancing"],
+          "week": 3
+        },
+        {
+          "material_id": "mat303",
+          "material_type": "quiz_instructions",
+          "title": "Quiz 3: Graphs",
+          "content": "This quiz covers graph representations, traversal algorithms, and shortest path algorithms. Topics include adjacency matrices, adjacency lists, BFS, DFS, and Dijkstra's algorithm. Be prepared to analyze graph structures and algorithms in various scenarios.",
+          "due_date": "2026-02-15T23:59:59Z",
+          "points": 20,
+          "topics": ["graphs", "BFS", "DFS", "shortest path"],
+          "week": 5
+        }
+      ],
+      "semantic_summaries": [
+        {
+          "text": "Binary Search Trees (BSTs) provide efficient data storage with O(log n) search, insert, and delete operations when balanced. The property that distinguishes BSTs is that for any node, all values in its left subtree are less than the node's value, and all values in its right subtree are greater. This enables binary search, resulting in logarithmic time complexity for balanced trees. However, if a BST becomes unbalanced (e.g., inserting sorted data), performance degrades to O(n). Balancing techniques like AVL and Red-Black trees maintain O(log n) performance by enforcing structure rules during modifications.",
+          "metadata": {
+            "topic": "BST complexity",
+            "course_id": "112233",
+            "material_ids": ["mat003", "mat004", "mat102"]
+          }
+        },
+        {
+          "text": "Tree balancing is essential for maintaining optimal BST performance. Unbalanced trees can degrade to linked list-like structures with O(n) operations. AVL trees maintain balance by ensuring the height difference between left and right subtrees never exceeds one, performing rotations when this property is violated during insertions or deletions. Red-Black trees use node coloring and rotations to maintain approximate balance with fewer rotations than AVL trees, making them more efficient for frequent modifications but slightly less balanced. Both guarantee O(log n) operations by preventing the worst-case scenario of linearly arranged nodes.",
+          "metadata": {
+            "topic": "tree balancing",
+            "course_id": "112233",
+            "material_ids": ["mat004", "mat102"]
+          }
+        },
+        {
+          "text": "Array insertion has different time complexities depending on the insertion position and whether the array has available capacity. Inserting at the end of an array with available space is O(1). However, inserting at a specific position requires shifting elements to make room, resulting in O(n) worst-case time complexity as potentially all elements need to be moved. Additionally, if an array reaches its capacity, resizing requires creating a new larger array and copying all elements, also resulting in O(n) operations. This contrasts with linked lists, which can perform insertions in O(1) time if the insertion position is known, regardless of list size.",
+          "metadata": {
+            "topic": "array insertion complexity",
+            "course_id": "112233",
+            "material_ids": ["mat002", "mat101"]
+          }
+        },
+        {
+          "text": "Graph traversal algorithms systematically visit all vertices in a graph. Breadth-First Search (BFS) explores a graph level by level, visiting all neighbors of a vertex before moving to the next level. It uses a queue data structure and is ideal for finding the shortest path in unweighted graphs, with O(V+E) time complexity. Depth-First Search (DFS) explores as far as possible along each branch before backtracking, using a stack or recursion. Both algorithms form the basis for many graph operations and can be adapted to solve various problems like connectivity analysis, cycle detection, and path finding.",
+          "metadata": {
+            "topic": "graph traversal algorithms",
+            "course_id": "112233",
+            "material_ids": ["mat005", "mat006"]
+          }
+        },
+        {
+          "text": "Shortest path algorithms find minimal-cost paths between vertices in a graph. Dijkstra's algorithm finds the shortest path from a source vertex to all other vertices in weighted graphs with non-negative weights, using a priority queue to process vertices in order of their current distance, with O((V+E)log V) time complexity. Bellman-Ford can handle negative edge weights and detect negative cycles with O(V*E) complexity. Floyd-Warshall finds shortest paths between all pairs of vertices with O(V³) complexity. These algorithms have applications in network routing, transportation planning, and resource allocation problems.",
+          "metadata": {
+            "topic": "shortest path algorithms",
+            "course_id": "112233",
+            "material_ids": ["mat007"]
+          }
+        }
+      ]
+    },
+    {
+      "course_id": "112234",
+      "course_code": "CSE340",
+      "course_name": "Principles of Programming Languages",
+      "materials": [
+        {
+          "material_id": "mat1001",
+          "material_type": "lecture_notes",
+          "title": "Introduction to Programming Languages",
+          "content": "This lecture introduces the fundamental concepts and principles in programming language design. We explore language classifications, syntax, semantics, and evaluation criteria. The history and evolution of programming languages are discussed to provide context for modern language features.",
+          "topics": ["programming languages", "language design", "syntax", "semantics"],
+          "week": 1
+        },
+        {
+          "material_id": "mat1002",
+          "material_type": "lecture_notes",
+          "title": "Programming Paradigms Overview",
+          "content": "This lecture provides an overview of major programming paradigms including imperative, declarative, functional, object-oriented, and logic programming. We compare their characteristics, strengths, weaknesses, and appropriate use cases through example implementations.",
+          "topics": ["programming paradigms", "imperative", "declarative", "functional", "object-oriented", "logic programming"],
+          "week": 2
+        },
+        {
+          "material_id": "mat1003",
+          "material_type": "lecture_notes",
+          "title": "Procedural Programming",
+          "content": "Procedural programming organizes code into procedures or subroutines that operate on data. This lecture explores key concepts like procedures, parameters, local variables, and state management. We examine how modern languages incorporate procedural elements alongside other paradigms.",
+          "topics": ["procedural programming", "procedures", "functions", "subroutines", "state management"],
+          "week": 2
+        },
+        {
+          "material_id": "mat1004",
+          "material_type": "lecture_notes",
+          "title": "Functional Programming",
+          "content": "Functional programming treats computation as the evaluation of mathematical functions, avoiding mutable state and side effects. This lecture covers key concepts including first-class functions, higher-order functions, pure functions, recursion, and immutability. We examine functional languages and functional features in multi-paradigm languages.",
+          "topics": ["functional programming", "first-class functions", "higher-order functions", "immutability", "recursion"],
+          "week": 3
+        },
+        {
+          "material_id": "mat1101",
+          "material_type": "reading",
+          "title": "History of Programming Languages",
+          "content": "This reading provides a comprehensive overview of the evolution of programming languages from the 1950s to the present day. It traces the development of major language features, paradigms, and design principles that have shaped modern programming languages.",
+          "topics": ["programming language history", "language evolution", "pioneering languages"],
+          "week": 1
+        },
+        {
+          "material_id": "mat1102",
+          "material_type": "reading",
+          "title": "Deep Dive into Procedural Programming",
+          "content": "This reading examines procedural programming in depth, covering its historical context, key characteristics, and modern applications. It discusses procedure definition and invocation, parameter passing mechanisms, variable scope, and how procedural programming compares to and interacts with other paradigms.",
+          "topics": ["procedural programming", "parameter passing", "variable scope", "global state"],
+          "week": 2
+        }
+      ],
+      "semantic_summaries": [
+        {
+          "text": "Procedural programming is a programming paradigm centered around procedures or subroutines that perform operations on data. Key characteristics include sequential execution, use of procedures to encapsulate functionality, and reliance on variables to maintain program state. Unlike pure functional programming, procedural code typically modifies global or shared state and can have side effects. Procedural languages organize code into modules or functions that are invoked to perform specific tasks, using variables, control structures, and procedures. Languages like C, Pascal, and FORTRAN are primarily procedural, while many modern languages incorporate procedural elements alongside other paradigms.",
+          "metadata": {
+            "topic": "procedural programming concepts",
+            "course_id": "112234",
+            "material_ids": ["mat1002", "mat1003", "mat1102"]
+          }
+        },
+        {
+          "text": "Functional programming is a paradigm that treats computation as the evaluation of mathematical functions and avoids changing state and mutable data. Core principles include first-class and higher-order functions (functions that can be passed as arguments and returned from other functions), pure functions (functions without side effects that return the same output for the same input), immutability (data cannot be modified after creation), and declarative programming style (specifying what to accomplish rather than how). Functional programming emphasizes expressions over statements and recursion over iteration. Languages like Haskell, Clojure, and Scala are primarily functional, while languages like JavaScript, Python, and Ruby incorporate functional features.",
+          "metadata": {
+            "topic": "functional programming",
+            "course_id": "112234",
+            "material_ids": ["mat1002", "mat1004"]
+          }
+        },
+        {
+          "text": "Object-oriented programming (OOP) is a programming paradigm based on the concept of 'objects', which are data structures that contain data (attributes or properties) and code (methods or procedures). Objects are instances of classes, which define their structure and behavior. Key concepts in OOP include encapsulation (bundling data with methods that operate on that data), inheritance (deriving new classes from existing ones), and polymorphism (treating objects of different types through a common interface). OOP promotes code reusability, modularity, and maintainability by modeling software as collections of interacting objects. Languages like Java, C++, and Python support object-oriented programming principles.",
+          "metadata": {
+            "topic": "object-oriented programming",
+            "course_id": "112234",
+            "material_ids": ["mat1002"]
+          }
+        }
+      ]
+    },
+    {
+      "course_id": "112235",
+      "course_code": "MAT243",
+      "course_name": "Discrete Mathematical Structures",
+      "materials": [
+        {
+          "material_id": "mat2001",
+          "material_type": "lecture_notes",
+          "title": "Introduction to Discrete Mathematics",
+          "content": "This lecture introduces the fundamental concepts of discrete mathematics and its applications in computer science. We discuss the difference between continuous and discrete mathematics and provide an overview of topics including sets, logic, and proof techniques.",
+          "topics": ["discrete mathematics", "sets", "logic", "proofs"],
+          "week": 1
+        },
+        {
+          "material_id": "mat2002",
+          "material_type": "lecture_notes",
+          "title": "Set Theory and Relations",
+          "content": "This lecture covers set theory fundamentals, set operations, relations, and their properties. We discuss equivalence relations, partial orders, and their representations using diagrams and matrices.",
+          "topics": ["set theory", "relations", "equivalence relations", "partial orders"],
+          "week": 2
+        }
+      ]
+    }
+  ]
+}

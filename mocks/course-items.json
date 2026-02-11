@@ -1,0 +1,208 @@
+{
+  "course_items": [
+    {
+      "item_id": "5001",
+      "student_id": "987654",
+      "course_id": "112233",
+      "item_type": "quiz",
+      "title": "Quiz 1: Arrays and Linked Lists",
+      "points_possible": 20,
+      "latest_score": 18,
+      "attempt_count": 1,
+      "last_submitted_at": "2026-01-15T14:30:00Z",
+      "attempts": [
+        {
+          "attempt_no": 1,
+          "submitted_at": "2026-01-15T14:30:00Z",
+          "score": 18,
+          "questions": [
+            {
+              "topic": "array vs linked list",
+              "correct_answer": "Array has O(1) random access",
+              "student_answer": "Array has O(1) random access",
+              "is_correct": true
+            },
+            {
+              "topic": "linked list insertion",
+              "correct_answer": "O(1) at head or tail with pointer",
+              "student_answer": "O(1) at head or tail with pointer",
+              "is_correct": true
+            },
+            {
+              "topic": "array insertion complexity",
+              "correct_answer": "O(n) in worst case",
+              "student_answer": "O(log n) in worst case",
+              "is_correct": false
+            }
+          ]
+        }
+      ],
+      "feedback": [
+        { "comment": "Good understanding of basic data structure properties." }
+      ]
+    },
+    {
+      "item_id": "5002",
+      "student_id": "987654",
+      "course_id": "112233",
+      "item_type": "quiz",
+      "title": "Quiz 2: Trees",
+      "points_possible": 20,
+      "latest_score": 16,
+      "attempt_count": 2,
+      "last_submitted_at": "2026-02-03T14:10:00Z",
+      "attempts": [
+        {
+          "attempt_no": 1,
+          "submitted_at": "2026-02-01T10:30:00Z",
+          "score": 8,
+          "questions": [
+            {
+              "topic": "BST complexity",
+              "correct_answer": "O(log n)",
+              "student_answer": "O(n)",
+              "is_correct": false
+            },
+            {
+              "topic": "tree traversal",
+              "correct_answer": "inorder, preorder, postorder",
+              "student_answer": "preorder, inorder, postorder",
+              "is_correct": true
+            },
+            {
+              "topic": "tree balancing",
+              "correct_answer": "AVL or red-black tree",
+              "student_answer": "heap sort",
+              "is_correct": false
+            }
+          ]
+        },
+        {
+          "attempt_no": 2,
+          "submitted_at": "2026-02-03T14:10:00Z",
+          "score": 16,
+          "questions": [
+            {
+              "topic": "BST complexity",
+              "correct_answer": "O(log n)",
+              "student_answer": "O(log n)",
+              "is_correct": true
+            },
+            {
+              "topic": "tree traversal",
+              "correct_answer": "inorder, preorder, postorder",
+              "student_answer": "preorder, inorder, postorder",
+              "is_correct": true
+            },
+            {
+              "topic": "tree balancing",
+              "correct_answer": "AVL or red-black tree",
+              "student_answer": "AVL tree",
+              "is_correct": true
+            }
+          ]
+        }
+      ],
+      "feedback": [
+        { "comment": "Review tree balancing." }
+      ]
+    },
+    {
+      "item_id": "6001",
+      "student_id": "987654",
+      "course_id": "112233",
+      "item_type": "assignment",
+      "title": "Assignment 2: Trees",
+      "points_possible": 20,
+      "latest_score": 18,
+      "attempt_count": 2,
+      "last_submitted_at": "2026-02-06T09:00:00Z",
+      "attempts": [
+        {
+          "attempt_no": 1,
+          "submitted_at": "2026-02-04T18:00:00Z",
+          "score": 14,
+          "submission": {
+            "files": ["hw2_v1.pdf"]
+          }
+        },
+        {
+          "attempt_no": 2,
+          "submitted_at": "2026-02-06T09:00:00Z",
+          "score": 18,
+          "submission": {
+            "files": ["hw2_final.pdf"]
+          }
+        }
+      ],
+      "feedback": [
+        { "comment": "Good approach, but missing edge cases." }
+      ]
+    },
+    {
+      "item_id": "7001",
+      "student_id": "987654",
+      "course_id": "112233",
+      "item_type": "quiz",
+      "title": "Quiz 3: Graphs",
+      "points_possible": 20,
+      "latest_score": null,
+      "attempt_count": 0,
+      "due_date": "2026-02-15T23:59:59Z",
+      "status": "upcoming"
+    },
+    {
+      "item_id": "8001",
+      "student_id": "987654",
+      "course_id": "112233",
+      "item_type": "assignment",
+      "title": "Assignment 3: Graph Algorithms",
+      "points_possible": 30,
+      "latest_score": null,
+      "attempt_count": 0,
+      "due_date": "2026-02-20T23:59:59Z",
+      "status": "upcoming"
+    },
+    {
+      "item_id": "5101",
+      "student_id": "987654",
+      "course_id": "112234",
+      "item_type": "quiz",
+      "title": "Quiz 1: Programming Paradigms",
+      "points_possible": 15,
+      "latest_score": 12,
+      "attempt_count": 1,
+      "last_submitted_at": "2026-01-20T11:45:00Z",
+      "attempts": [
+        {
+          "attempt_no": 1,
+          "submitted_at": "2026-01-20T11:45:00Z",
+          "score": 12,
+          "questions": [
+            {
+              "topic": "functional programming",
+              "correct_answer": "avoids mutable state and side effects",
+              "student_answer": "avoids mutable state and side effects",
+              "is_correct": true
+            },
+            {
+              "topic": "object-oriented programming",
+              "correct_answer": "encapsulation, inheritance, polymorphism",
+              "student_answer": "encapsulation, inheritance, polymorphism",
+              "is_correct": true
+            },
+            {
+              "topic": "procedural programming",
+              "correct_answer": "focuses on procedure calls and routines",
+              "student_answer": "focuses on functions that modify global state",
+              "is_correct": false
+            }
+          ]
+        }
+      ],
+      "feedback": [
+        { "comment": "Good understanding of functional and OOP paradigms." }
+      ]
+    }
+  ]
+}

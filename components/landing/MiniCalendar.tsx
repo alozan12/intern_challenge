@@ -16,31 +16,9 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
-  // Show only 2 weeks at a time
-  // By default show first 2 weeks, or if currentDay is after first 2 weeks, show last 2 weeks
-  const firstTwoWeeksEnd = new Date(monthStart)
-  firstTwoWeeksEnd.setDate(firstTwoWeeksEnd.getDate() + 13) // 14 days (2 weeks) from start
   
-  // Check if today is after the first 2 weeks
-  const today = new Date()
-  const showSecondHalf = isToday(today) && today > firstTwoWeeksEnd && isSameMonth(today, currentMonth)
-  
-  let periodStart, periodEnd
-  if (showSecondHalf) {
-    // Show the second half of the month (last 2 weeks)
-    const daysInMonth = monthEnd.getDate()
-    // Start from the midpoint or 2 weeks before end, whichever gives exactly 2 weeks
-    periodStart = new Date(monthStart)
-    periodStart.setDate(Math.max(15, daysInMonth - 13))
-    periodEnd = monthEnd
-  } else {
-    // Show first 2 weeks
-    periodStart = monthStart
-    periodEnd = firstTwoWeeksEnd
-  }
-  
-  // Get days for the 2 week period
-  const days = eachDayOfInterval({ start: periodStart, end: periodEnd })
+  // Get all days for the full month
+  const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
 
   const handlePreviousMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1))
@@ -63,7 +41,7 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
   return (
     <div className="rounded-lg p-1">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-xs font-semibold text-gray-700">Calendar</h3>
+        <h3 className="text-sm font-semibold text-gray-700">Calendar</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={handlePreviousMonth}
@@ -72,7 +50,7 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
           >
             <ChevronLeft className="w-3 h-3" />
           </button>
-          <span className="text-xs font-medium min-w-[70px] text-center overflow-hidden text-ellipsis whitespace-nowrap">
+          <span className="text-sm font-medium min-w-[70px] text-center overflow-hidden text-ellipsis whitespace-nowrap">
             {format(currentMonth, 'MMMM yyyy')}
           </span>
           <button
@@ -95,7 +73,7 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
           { day: 'F', key: 'fri' }, 
           { day: 'S', key: 'sat' }
         ].map((item) => (
-          <div key={item.key} className="text-xs font-medium text-gray-500 text-center py-0">
+          <div key={item.key} className="text-sm font-medium text-gray-500 text-center py-0">
             {item.day}
           </div>
         ))}
@@ -115,16 +93,16 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
               key={day.toISOString()}
               href={`/calendar?date=${format(day, 'yyyy-MM-dd')}`}
               className={cn(
-                "aspect-square p-0 flex flex-col items-center justify-center rounded-md transition-colors relative text-xs",
+                "aspect-square p-0 flex items-center justify-center rounded-md transition-colors relative text-sm",
                 isCurrentDay && "bg-asu-maroon text-white",
                 !isCurrentDay && hasDeadlines && "bg-asu-gold/20 hover:bg-asu-gold/30",
                 !isCurrentDay && !hasDeadlines && "hover:bg-gray-100",
                 !isSameMonth(day, currentMonth) && "text-gray-300"
               )}
             >
-              <span className="text-xs font-medium">{format(day, 'd')}</span>
+              <span className="text-sm font-medium">{format(day, 'd')}</span>
               {hasDeadlines && (
-                <div className="flex gap-0.5 mt-0">
+                <div className="absolute bottom-0.5 left-0 right-0 flex justify-center gap-0.5">
                   {dayDeadlines.slice(0, 3).map((_, idx) => (
                     <div
                       key={idx}
@@ -144,10 +122,10 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
       <div className="mt-0.5 pt-0.5 border-t border-gray-100 text-center">
         <Link 
           href="/calendar" 
-          className="text-[0.65rem] text-asu-maroon hover:underline flex items-center justify-center gap-0.5"
+          className="text-xs text-asu-maroon hover:underline flex items-center justify-center gap-0.5"
         >
           View full calendar
-          <ArrowRight className="w-2 h-2" />
+          <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
     </div>

@@ -346,6 +346,7 @@ export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}
     if (pathname.startsWith('/analytics')) return "Analytics";
     if (pathname.startsWith('/calendar')) return "Academic Calendar";
     if (pathname.startsWith('/settings')) return "Settings";
+    if (pathname.startsWith('/insights')) return "AI Study Insights";
     return "";
   }
   
@@ -386,12 +387,12 @@ export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}
           {pathname.startsWith('/preparation') && onToggleSidebar && (
             <button 
               onClick={onToggleSidebar}
-              className="p-1 mr-1 rounded-md hover:bg-gray-100 transition-colors"
+              className="p-1.5 mr-2 rounded-md hover:bg-gray-100 transition-colors"
               title={isSidebarMinimized ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isSidebarMinimized ? 
-                <ChevronRight className="w-4 h-4 text-gray-500" /> : 
-                <Menu className="w-4 h-4 text-gray-500" />
+                <ChevronRight className="w-5 h-5 text-gray-600" /> : 
+                <Menu className="w-5 h-5 text-gray-600" />
               }
             </button>
           )}

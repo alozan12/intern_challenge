@@ -19,6 +19,11 @@ interface QuizResults {
   correctAnswers: number[]
   userAnswers: (number | null)[]
   timeSpent: number
+  performanceAnalysis?: {
+    strengths: string[]
+    weaknesses: string[]
+    recommendations: string[]
+  }
 }
 
 interface QuestionState {
@@ -154,18 +159,52 @@ export function MultipleChoiceQuiz({ quiz = mockQuizData, onComplete, onClose, i
     setCurrentQuestionIndex(index)
   }
 
-  const handleShowResults = () => {
+  const handleShowResults = async () => {
     const timeSpent = Math.round((Date.now() - startTime) / 1000)
     const correctAnswers = questionStates.map((state, index) => 
       state.isCorrect ? index : -1
     ).filter(index => index !== -1)
     
+    // Identify correct and incorrect questions for analysis
+    const correctQuestions = correctAnswers.map(index => quiz.content.questions[index])
+    const incorrectQuestions = questionStates
+      .map((state, index) => !state.isCorrect ? quiz.content.questions[index] : null)
+      .filter(q => q !== null)
+    
+    // Create the initial results
     const results: QuizResults = {
       score: Math.round((correctAnswers.length / quiz.content.questions.length) * 100),
       totalQuestions: quiz.content.questions.length,
       correctAnswers,
       userAnswers: questionStates.map(state => state.selectedAnswer),
       timeSpent
+    }
+    
+    try {
+      // Get AI analysis of performance
+      const analysisResponse = await fetch('/api/study/quiz-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          score: results.score,
+          totalQuestions: results.totalQuestions,
+          correctQuestions, 
+          incorrectQuestions,
+          timeSpent: results.timeSpent,
+          quizTitle: quiz.title
+        })
+      })
+      
+      if (analysisResponse.ok) {
+        const analysisData = await analysisResponse.json()
+        if (analysisData.analysis) {
+          results.performanceAnalysis = analysisData.analysis
+        }
+      }
+    } catch (error) {
+      console.error('Error getting quiz performance analysis:', error)
     }
 
     setShowResults(true)
@@ -244,17 +283,55 @@ export function MultipleChoiceQuiz({ quiz = mockQuizData, onComplete, onClose, i
               <div>
                 <h4 className="font-semibold text-blue-900 mb-2">AI Study Insights</h4>
                 <div className="space-y-2 text-sm text-blue-800">
-                  {score < 60 && (
-                    <p>• Focus on reviewing memory and learning concepts - you missed several questions in this area</p>
+                  {/* Check for personalized analysis from AI */}
+                  {questionStates.length > 0 && (
+                    <>
+                      {/* Strengths section */}
+                      {questionStates.some(state => state.isCorrect) && (
+                        <div className="mb-2">
+                          <p className="font-medium text-blue-900">Your strengths:</p>
+                          {correctCount >= quiz.content.questions.length ? (
+                            <p>• Perfect score! You've mastered all the concepts in this quiz.</p>
+                          ) : questionStates.some(state => state.isCorrect) ? (
+                            quiz.content.questions
+                              .filter((_, idx) => questionStates[idx].isCorrect)
+                              .slice(0, 2)
+                              .map((q, idx) => (
+                                <p key={idx}>• You understand: {q.question.split('?')[0]}</p>
+                              ))
+                          ) : null}
+                        </div>
+                      )}
+                      
+                      {/* Weaknesses section */}
+                      {questionStates.some(state => !state.isCorrect) && (
+                        <div className="mb-2">
+                          <p className="font-medium text-blue-900">Areas for improvement:</p>
+                          {quiz.content.questions
+                            .filter((_, idx) => !questionStates[idx].isCorrect)
+                            .slice(0, 2)
+                            .map((q, idx) => (
+                              <p key={idx}>• Review: {q.question.split('?')[0]}</p>
+                            ))}
+                        </div>
+                      )}
+                      
+                      {/* Recommendations based on score */}
+                      <div>
+                        <p className="font-medium text-blue-900">Recommendations:</p>
+                        {score < 60 && (
+                          <p>• Focus on reviewing key concepts you missed - schedule a 20-minute review session</p>
+                        )}
+                        {score >= 60 && score < 80 && (
+                          <p>• You have a solid foundation! Schedule a targeted 15-minute review of missed concepts</p>
+                        )}
+                        {score >= 80 && (
+                          <p>• Excellent understanding! Consider creating flashcards to reinforce your knowledge</p>
+                        )}
+                        <p>• Practice retrieval: Try explaining these concepts in your own words</p>
+                      </div>
+                    </>
                   )}
-                  {score >= 60 && score < 80 && (
-                    <p>• You have a solid foundation! Review classical conditioning and research methods for improvement</p>
-                  )}
-                  {score >= 80 && (
-                    <p>• Excellent understanding! Consider exploring more advanced topics in neuroplasticity</p>
-                  )}
-                  <p>• Recommended next study session: 15-minute review of missed concepts</p>
-                  <p>• Practice retrieval: Try explaining these concepts in your own words</p>
                 </div>
               </div>
             </div>

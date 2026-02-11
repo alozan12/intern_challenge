@@ -1,0 +1,60 @@
+{
+  "student": {
+    "id": "987654",
+    "name": "Jordan Student",
+    "email": "student@asu.edu",
+    "created_at": "2026-01-01T00:00:00Z"
+  },
+  "courses": [
+    {
+      "course_id": "112233",
+      "course_code": "CSE310",
+      "course_name": "Data Structures & Algorithms",
+      "term": "Spring 2026"
+    },
+    {
+      "course_id": "112234",
+      "course_code": "CSE340",
+      "course_name": "Principles of Programming Languages",
+      "term": "Spring 2026"
+    },
+    {
+      "course_id": "112235",
+      "course_code": "MAT243",
+      "course_name": "Discrete Mathematical Structures",
+      "term": "Spring 2026"
+    }
+  ],
+  "enrollments": [
+    {
+      "enrollment_id": "10001",
+      "student_id": "987654",
+      "course_id": "112233",
+      "enrolled_at": "2026-01-05T00:00:00Z"
+    },
+    {
+      "enrollment_id": "10002",
+      "student_id": "987654",
+      "course_id": "112234",
+      "enrolled_at": "2026-01-05T00:00:00Z"
+    },
+    {
+      "enrollment_id": "10003",
+      "student_id": "987654",
+      "course_id": "112235",
+      "enrolled_at": "2026-01-05T00:00:00Z"
+    }
+  ],
+  "performance_metrics": {
+    "average_score": 85,
+    "submission_timeliness": 0.92,
+    "engagement_score": 0.78,
+    "study_consistency": 0.65
+  },
+  "learning_preferences": {
+    "preferred_study_time": "evening",
+    "session_duration": 30,
+    "content_type_preference": ["visual", "practice"],
+    "review_frequency": "medium"
+  }
+}
