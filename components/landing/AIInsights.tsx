@@ -76,13 +76,50 @@ export function AIInsights() {
       
       // Map the recommendations to our AIInsight format
       if (data.type === 'recommendation' && Array.isArray(data.data?.recommendations)) {
+        console.log('Received recommendations:', data.data.recommendations);
+        
         const mappedInsights: AIInsight[] = data.data.recommendations.map((rec: any, index: number) => {
-          // Extract the first course info (in real app, match to topic)
-          const courseInfo = {
-            id: rec.topics[0] ? 'course_' + index : 'unknown',
-            name: rec.topics[0] || 'General Course',
-            code: 'CSE 101'
-          };
+          // Get course info from the first topic
+          let courseId = 'unknown';
+          let courseName = 'General Course';
+          let courseCode = 'CSE 101';
+          
+          // Try to determine the course from the topic
+          if (rec.topics && rec.topics.length > 0) {
+            const topic = rec.topics[0].toLowerCase();
+            
+            // Data structures related topics likely belong to CSE310
+            if (topic.includes('tree') || topic.includes('bst') || topic.includes('array') || 
+                topic.includes('linked list') || topic.includes('graph')) {
+              courseId = '112233';
+              courseName = 'Data Structures & Algorithms';
+              courseCode = 'CSE310';
+            }
+            // Programming languages topics likely belong to CSE340
+            else if (topic.includes('programming') || topic.includes('functional') || 
+                     topic.includes('procedural') || topic.includes('oop')) {
+              courseId = '112234';
+              courseName = 'Principles of Programming Languages';
+              courseCode = 'CSE340';
+            }
+            // Discrete math topics
+            else if (topic.includes('math') || topic.includes('discrete')) {
+              courseId = '112235';
+              courseName = 'Discrete Mathematical Structures';
+              courseCode = 'MAT243';
+            }
+          }
+          
+          // Extract deadline if present in the recommendation
+          let deadline = undefined;
+          if (rec.deadline) {
+            deadline = {
+              id: rec.deadline.id || `deadline_${index}`,
+              title: rec.deadline.title,
+              dueDate: new Date(rec.deadline.dueDate),
+              type: rec.deadline.type || 'assignment'
+            };
+          }
           
           return {
             id: `insight_${index}`,
@@ -90,11 +127,11 @@ export function AIInsights() {
             description: rec.description,
             duration: rec.duration,
             type: rec.type === 'quick' ? 'review' : 'practice',
-            courseId: courseInfo.id,
-            courseName: courseInfo.name,
-            courseCode: courseInfo.code,
-            topic: rec.topics[0] || 'General'
-            // No deadline for recommendations
+            courseId: courseId,
+            courseName: courseName,
+            courseCode: courseCode,
+            topic: rec.topics[0] || 'General',
+            deadline: deadline
           };
         });
         
@@ -174,7 +211,7 @@ export function AIInsights() {
             href="/insights"
             className="text-sm text-[#8C1D40] hover:underline flex items-center gap-1"
           >
-            <span>View All</span>
+            <span>View All Insights</span>
             <ArrowRight className="h-3 w-3" />
           </Link>
         </div>

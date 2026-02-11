@@ -384,7 +384,13 @@ export function RightPanel({ courseId }: RightPanelProps) {
           onToggleFullscreen={handleToggleFullscreen}
           onComplete={(results) => {
             console.log('Quiz completed:', results)
-            // Here you could save results or show additional feedback
+            
+            // Save results to a database or state management
+            // This would typically be an API call to save the results
+            // For now, we just log them, but in production we would save them
+            
+            // The MultipleChoiceQuiz component now automatically shows AI analysis
+            // of the student's performance in the results page
           }}
         />
       )

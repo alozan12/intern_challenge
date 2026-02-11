@@ -177,6 +177,7 @@ export async function queryCreateAI<T = any>(query: string, options: {
   context?: Record<string, any>;
   stream?: boolean;
 } = {}): Promise<CreateAIResponse<T>> {
+  console.log('QueryCreateAI called with options:', { query, ...options });
   try {
     if (!process.env.CREATE_AI_API_ENDPOINT || !process.env.CREATE_AI_API_TOKEN) {
       console.warn('CreateAI API configuration missing, falling back to mock response');

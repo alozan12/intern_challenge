@@ -85,6 +85,17 @@ export async function POST(req: NextRequest) {
     const studentProfile = studentProfileData.student;
     const enrolledCourses = studentProfileData.courses;
     
+    // Add upcoming deadlines data
+    const upcomingDeadlines = courseItemsData.course_items
+      .filter(item => item.status === 'upcoming' && item.due_date)
+      .map(item => ({
+        id: item.item_id,
+        title: item.title,
+        type: item.item_type as 'assignment' | 'quiz' | 'exam' | 'discussion',
+        dueDate: new Date(item.due_date),
+        courseId: item.course_id
+      }));
+    
     // Set up system prompt and query based on insight type
     let systemPrompt = 'You are the ASU Study Coach insights generator, an AI assistant that analyzes student performance data to provide personalized insights and recommendations.';
     let userPrompt = '';
@@ -146,6 +157,7 @@ export async function POST(req: NextRequest) {
       learningGaps: learningGapsData,
       performanceMetrics: studentProfileData.performance_metrics,
       learningPreferences: studentProfileData.learning_preferences,
+      upcomingDeadlines: upcomingDeadlines,
       insightType
     };
     
@@ -180,16 +192,58 @@ export async function POST(req: NextRequest) {
     }
     
     // For non-streaming responses
-    const response = await queryCreateAI(userPrompt, options);
-    
-    // If there's an error with the direct API, fall back to project API
-    if (response.error) {
-      console.warn('Direct API call failed, falling back to project API:', response.error);
+    // Always attempt to use the CreateAI API first
+    try {
+      console.log('Sending request to CreateAI API...');
+      const response = await queryCreateAI(userPrompt, options);
       
-      // Skip project API - we don't have access
-      console.log('Falling back to mock data');
+      if (!response.error && response.data) {
+        console.log('Successfully received CreateAI response');
+        
+        // Process API response and extract the JSON content
+        let responseContent = response.data;
+        
+        if (typeof response.data === 'object' && 'response' in response.data) {
+          // Extract the actual response text
+          const rawResponse = response.data.response;
+          
+          // Try to parse the JSON content from the response
+          try {
+            if (typeof rawResponse === 'string') {
+              // Find JSON content in the string (it might be wrapped in markdown code blocks)
+              const jsonMatch = rawResponse.match(/```json\n([\s\S]*?)\n```/) || 
+                               rawResponse.match(/```([\s\S]*?)```/) ||
+                               [null, rawResponse];
+                               
+              if (jsonMatch && jsonMatch[1]) {
+                responseContent = JSON.parse(jsonMatch[1].trim());
+              } else {
+                // If not in code blocks, try parsing the whole response
+                responseContent = JSON.parse(rawResponse.trim());
+              }
+            }
+          } catch (parseError) {
+            console.warn('Failed to parse JSON from CreateAI response:', parseError);
+            console.log('Raw response:', rawResponse);
+            // Continue with the raw response
+          }
+        }
+        
+        const responseData: InsightsResponse = {
+          type: insightType,
+          data: responseContent,
+          timestamp: new Date().toISOString()
+        };
+        
+        return NextResponse.json(responseData);
+      } else {
+        console.warn('CreateAI API error:', response.error);
+        throw new Error(response.error || 'Unknown API error');
+      }
+    } catch (apiError) {
+      console.warn('CreateAI API call failed, falling back to mock data:', apiError);
       
-      // Return mock data
+      // Return mock data as fallback
       const responseData: InsightsResponse = {
         type: insightType,
         data: getMockInsights(insightType),

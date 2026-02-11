@@ -47,9 +47,9 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 p-4">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 py-6 mb-6">
-        <div className="bg-asu-maroon text-white font-bold text-lg w-10 h-10 rounded-md flex items-center justify-center">
-          SC
+      <div className="flex items-center gap-2.5 px-4 py-6 mb-6">
+        <div className="flex-shrink-0">
+          <img src="/mock_assets/logo.png" alt="Study Coach Logo" className="w-12 h-12" />
         </div>
         <div>
           <h1 className="font-bold text-gray-900">Study Coach</h1>
