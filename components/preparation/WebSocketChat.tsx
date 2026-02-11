@@ -53,9 +53,8 @@ export default function WebSocketChat() {
       // Create a placeholder for the AI message
       let accumulatedResponse = '';
       
-      try {
-        // Call our WebSocket API endpoint
-        const response = await fetch('/api/ws-chat', {
+      // Call our WebSocket API endpoint
+      const response = await fetch('/api/ws-chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -107,7 +106,6 @@ export default function WebSocketChat() {
           console.error('Error reading stream:', streamError);
           throw new Error('Error reading response stream');
         }
-      }
       
     } catch (error) {
       console.error('Error in chat:', error);
