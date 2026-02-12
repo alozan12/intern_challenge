@@ -193,7 +193,7 @@ export default function PreparationDetailPage() {
           className="inline-flex items-center text-sm text-asu-maroon hover:underline mb-2"
         >
           <ArrowLeft className="mr-1 h-4 w-4" />
-          Back to Preparation Center
+          Back to Coursework
         </Link>
         <div className="flex items-start justify-between">
           <div>

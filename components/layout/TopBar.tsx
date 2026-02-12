@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-import { Clock, Bell, MessageSquare, Users, X, PlayCircle, PauseCircle, RotateCcw, SunMedium, Menu, ChevronRight, RefreshCw } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { Clock, Bell, MessageSquare, Users, X, PlayCircle, PauseCircle, RotateCcw, SunMedium, Menu, ChevronRight, RefreshCw, Plus, BookOpen, Brain, Target, FileText, Lightbulb, GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useViewMode } from '@/context/ViewModeContext'
 
@@ -327,6 +327,226 @@ function UsersTool() {
   )
 }
 
+// New Study Button Tool
+function NewStudyButton() {
+  const [isPanelOpen, setIsPanelOpen] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    icon: 'BookOpen',
+    courseId: ''
+  })
+  const [courses, setCourses] = useState<any[]>([])
+  const [loadingCourses, setLoadingCourses] = useState(false)
+  const router = useRouter()
+
+  const togglePanel = () => {
+    setIsPanelOpen(!isPanelOpen)
+    if (!isPanelOpen) {
+      // Reset form when opening
+      setFormData({ name: '', description: '', icon: 'BookOpen', courseId: '' })
+      // Fetch courses when opening
+      fetchCourses()
+    }
+  }
+
+  const fetchCourses = async () => {
+    setLoadingCourses(true)
+    try {
+      const response = await fetch('/api/courses')
+      const data = await response.json()
+      if (data.success) {
+        setCourses(data.courses)
+      }
+    } catch (err) {
+      console.error('Error fetching courses:', err)
+    } finally {
+      setLoadingCourses(false)
+    }
+  }
+
+  const handleCreate = () => {
+    if (!formData.name.trim() || !formData.courseId) return
+
+    // Generate unique ID
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    
+    // Create session object
+    const newSession = {
+      id: sessionId,
+      name: formData.name,
+      description: formData.description,
+      icon: formData.icon,
+      courseId: formData.courseId,
+      createdAt: new Date().toISOString(),
+      lastAccessed: new Date().toISOString(),
+      materials: []
+    }
+
+    // Save to localStorage
+    const existingSessions = JSON.parse(localStorage.getItem('customStudySessions') || '[]')
+    existingSessions.push(newSession)
+    localStorage.setItem('customStudySessions', JSON.stringify(existingSessions))
+
+    // Close modal and navigate
+    setIsPanelOpen(false)
+    router.push(`/preparation/custom/${sessionId}`)
+  }
+
+  const icons = [
+    { name: 'BookOpen', icon: BookOpen, label: 'Book' },
+    { name: 'Brain', icon: Brain, label: 'Brain' },
+    { name: 'Target', icon: Target, label: 'Target' },
+    { name: 'FileText', icon: FileText, label: 'Notes' },
+    { name: 'Lightbulb', icon: Lightbulb, label: 'Ideas' },
+    { name: 'GraduationCap', icon: GraduationCap, label: 'Academic' }
+  ]
+
+  return (
+    <div className="relative">
+      <button
+        onClick={togglePanel}
+        className={cn(
+          "px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 text-sm font-medium",
+          isPanelOpen 
+            ? "bg-asu-maroon text-white" 
+            : "bg-asu-maroon/10 text-asu-maroon hover:bg-asu-maroon/20"
+        )}
+      >
+        <Plus className="w-4 h-4" />
+        <span>New Study</span>
+      </button>
+
+      {/* New Study Modal */}
+      {isPanelOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={togglePanel}
+          />
+          
+          {/* Modal */}
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 p-6 z-50">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Create New Study Session</h3>
+              <button onClick={togglePanel} className="text-gray-500 hover:text-gray-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Session Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="e.g., Biology Midterm Review"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
+                  maxLength={50}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="What will you be studying?"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon resize-none"
+                  rows={3}
+                  maxLength={200}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Course *
+                </label>
+                <select
+                  value={formData.courseId}
+                  onChange={(e) => setFormData({ ...formData, courseId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-asu-maroon/50 focus:border-asu-maroon"
+                  disabled={loadingCourses}
+                >
+                  <option value="">Select a course</option>
+                  {courses.map(course => (
+                    <option key={course.course_id} value={course.course_id}>
+                      {course.course_code}: {course.course_name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Choose which course materials to access in this session
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Choose an Icon
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {icons.map(({ name, icon: Icon, label }) => (
+                    <button
+                      key={name}
+                      onClick={() => setFormData({ ...formData, icon: name })}
+                      className={cn(
+                        "flex flex-col items-center gap-1 p-3 rounded-md border-2 transition-all",
+                        formData.icon === name
+                          ? "border-asu-maroon bg-asu-maroon/5"
+                          : "border-gray-200 hover:border-gray-300"
+                      )}
+                    >
+                      <Icon className={cn(
+                        "w-6 h-6",
+                        formData.icon === name ? "text-asu-maroon" : "text-gray-600"
+                      )} />
+                      <span className={cn(
+                        "text-xs",
+                        formData.icon === name ? "text-asu-maroon font-medium" : "text-gray-500"
+                      )}>
+                        {label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={togglePanel}
+                className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={!formData.name.trim() || !formData.courseId}
+                className={cn(
+                  "flex-1 px-4 py-2 rounded-md font-medium transition-colors",
+                  formData.name.trim() && formData.courseId
+                    ? "bg-asu-maroon text-white hover:bg-asu-maroon/90"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                )}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}) {
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
@@ -379,10 +599,11 @@ export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}
       // If we have a specific course name, use that
       if (courseName) return courseName;
       // Otherwise fall back to generic title
-      return "Preparation Center";
+      return "Coursework";
     }
     if (pathname.startsWith('/analytics')) return "Analytics";
     if (pathname.startsWith('/calendar')) return "Academic Calendar";
+    if (pathname.startsWith('/library')) return "My Library";
     if (pathname.startsWith('/settings')) return "Settings";
     if (pathname.startsWith('/insights')) return "AI Study Insights";
     return "";
@@ -421,7 +642,7 @@ export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}
     <div className="h-14 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-8 z-40 relative">
       <div className="flex items-center">
         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          {/* Toggle sidebar button - only show for Preparation Center */}
+          {/* Toggle sidebar button - only show for Coursework */}
           {pathname.startsWith('/preparation') && onToggleSidebar && (
             <button 
               onClick={onToggleSidebar}
@@ -439,6 +660,8 @@ export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}
         <p className="text-gray-500 ml-4">{formattedDate}</p>
       </div>
       <div className="flex items-center gap-3">
+        <NewStudyButton />
+        <div className="h-6 w-px bg-gray-300" />
         <PomodoroTool />
         <RemindersTool />
         <AIChatTool />

@@ -446,22 +446,24 @@ export function ChatPanel({ courseId, deadlineId, courseName, deadlineTitle }: C
                     : "bg-gray-100 text-gray-900"
                 )}
               >
-                <MarkdownMessage 
-                  content={message.content} 
-                  isUser={message.role === 'user'}
-                  className={cn(
-                    message.role === 'user' ? "prose-invert" : "",
-                    viewMode === 'compact' ? 'text-xs' : 'text-sm'
-                  )}
-                />
-                <p className={cn(
-                  viewMode === 'compact' ? 'text-[10px] mt-0.5' : 'text-xs mt-1',
-                  message.role === 'user' ? "text-red-200" : "text-gray-500"
-                )}>
-                  <span suppressHydrationWarning>
-                    {format(message.timestamp, 'h:mm a')}
-                  </span>
-                </p>
+                <div>
+                  <MarkdownMessage 
+                    content={message.content} 
+                    isUser={message.role === 'user'}
+                    className={cn(
+                      message.role === 'user' ? "prose-invert" : "",
+                      viewMode === 'compact' ? 'text-xs' : 'text-sm'
+                    )}
+                  />
+                  <p className={cn(
+                    viewMode === 'compact' ? 'text-[10px] mt-0.5' : 'text-xs mt-1',
+                    message.role === 'user' ? "text-red-200" : "text-gray-500"
+                  )}>
+                    <span suppressHydrationWarning>
+                      {format(message.timestamp, 'h:mm a')}
+                    </span>
+                  </p>
+                </div>
               </div>
             </div>
           ))}

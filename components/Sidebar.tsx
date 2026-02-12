@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Home, BookOpen, BarChart3, GraduationCap, Calendar, Settings } from 'lucide-react'
+import { Home, BookOpen, BarChart3, GraduationCap, Calendar, Settings, Library } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
@@ -18,7 +18,8 @@ export function Sidebar({ isMinimized = false, onToggle }: SidebarProps) {
 
   const menuItems = [
     { icon: Home, label: 'Home', href: '/' },
-    { icon: BookOpen, label: 'Preparation', href: '/preparation' },
+    { icon: Library, label: 'My Library', href: '/library' },
+    { icon: BookOpen, label: 'Coursework', href: '/preparation' },
     { icon: BarChart3, label: 'Analytics', href: '/analytics' },
     { icon: Calendar, label: 'Calendar', href: '/calendar' },
     { icon: Settings, label: 'Settings', href: '/settings' },
@@ -61,7 +62,9 @@ export function Sidebar({ isMinimized = false, onToggle }: SidebarProps) {
                   className={cn(
                     "flex items-center rounded-md transition-colors gap-3 px-3 py-2",
                     isMinimized && "justify-center",
-                    pathname === item.href || (item.href === '/preparation' && pathname.startsWith('/preparation'))
+                    pathname === item.href || 
+                    (item.href === '/preparation' && pathname.startsWith('/preparation') && !pathname.includes('/custom/')) ||
+                    (item.href === '/library' && (pathname.startsWith('/library') || pathname.includes('/preparation/custom/')))
                       ? "bg-asu-maroon text-white"
                       : "text-gray-700 hover:bg-gray-100"
                   )}

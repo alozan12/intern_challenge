@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Menu, X, Home, BookOpen, BarChart3, GraduationCap, Calendar, Settings, ChevronLeft } from 'lucide-react'
+import { Menu, X, Home, BookOpen, BarChart3, GraduationCap, Calendar, Settings, ChevronLeft, Library } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
@@ -12,7 +12,8 @@ export function HamburgerMenu() {
 
   const menuItems = [
     { icon: Home, label: 'Home', href: '/' },
-    { icon: BookOpen, label: 'Preparation', href: '/preparation' },
+    { icon: Library, label: 'My Library', href: '/library' },
+    { icon: BookOpen, label: 'Coursework', href: '/preparation' },
     { icon: BarChart3, label: 'Analytics', href: '/analytics' },
     { icon: Calendar, label: 'Calendar', href: '/calendar' },
     { icon: Settings, label: 'Settings', href: '/settings' },

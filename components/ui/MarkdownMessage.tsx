@@ -20,7 +20,7 @@ export function MarkdownMessage({ content, className, isUser = false }: Markdown
   const quoteClass = isUser ? "border-red-300 text-red-100" : "border-gray-300 text-gray-700"
   
   return (
-    <div className={cn("prose prose-sm max-w-none", baseTextClass, className)}>
+    <div className={cn("prose prose-sm max-w-none w-full h-full cursor-pointer", baseTextClass, className)} style={{pointerEvents: 'auto'}}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
@@ -30,14 +30,14 @@ export function MarkdownMessage({ content, className, isUser = false }: Markdown
         h3: ({ children }) => <h3 className={cn("text-base font-semibold mt-2 mb-1", headingClass)}>{children}</h3>,
         
         // Paragraphs and text
-        p: ({ children }) => <p className="mb-3 last:mb-0">{children}</p>,
+        p: ({ children }) => <p className="mb-3 last:mb-0" style={{pointerEvents: 'auto'}}>{children}</p>,
         strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
         em: ({ children }) => <em className="italic">{children}</em>,
         
         // Lists
-        ul: ({ children }) => <ul className="list-disc list-inside mb-3 space-y-1">{children}</ul>,
-        ol: ({ children }) => <ol className="list-decimal list-inside mb-3 space-y-1">{children}</ol>,
-        li: ({ children }) => <li className="ml-2">{children}</li>,
+        ul: ({ children }) => <ul className="list-disc list-inside mb-3 space-y-1" style={{pointerEvents: 'auto'}}>{children}</ul>,
+        ol: ({ children }) => <ol className="list-decimal list-inside mb-3 space-y-1" style={{pointerEvents: 'auto'}}>{children}</ol>,
+        li: ({ children }) => <li className="ml-2" style={{pointerEvents: 'auto'}}>{children}</li>,
         
         // Code
         code: ({ inline, className, children, ...props }: any) => {

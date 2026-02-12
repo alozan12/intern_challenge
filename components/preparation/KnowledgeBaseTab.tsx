@@ -9,6 +9,7 @@ import { useSelectedMaterials } from '@/context/SelectedMaterialsContext'
 
 interface KnowledgeBaseTabProps {
   courseId: string
+  customSessionCourseId?: string
 }
 
 interface CourseMaterial {
@@ -75,7 +76,7 @@ const mapMaterialsToKnowledgeBase = (materials: CourseMaterial[]): KnowledgeBase
 };
 
 
-export function KnowledgeBaseTab({ courseId }: KnowledgeBaseTabProps) {
+export function KnowledgeBaseTab({ courseId, customSessionCourseId }: KnowledgeBaseTabProps) {
   const [items, setItems] = useState<KnowledgeBaseItem[]>([])
   const [filter, setFilter] = useState<'all' | KnowledgeBaseItem['type']>('all')
   const [isSaving, setIsSaving] = useState(false)
@@ -86,17 +87,34 @@ export function KnowledgeBaseTab({ courseId }: KnowledgeBaseTabProps) {
   
   useEffect(() => {
     const fetchMaterials = async () => {
-      console.log(`KnowledgeBaseTab: Fetching materials for courseId: ${courseId}`)
+      // Determine which courseId to use for fetching materials
+      const isCustomSession = courseId === 'custom';
+      const effectiveCourseId = isCustomSession ? customSessionCourseId : courseId;
+      
+      console.log(`KnowledgeBaseTab: Props received:`, { courseId, customSessionCourseId })
+      console.log(`KnowledgeBaseTab: Fetching materials for effectiveCourseId: ${effectiveCourseId}`)
+      console.log(`KnowledgeBaseTab: Is custom session: ${isCustomSession}`)
+      console.log(`KnowledgeBaseTab: Custom session course filter: ${customSessionCourseId}`)
+      
+      // For custom sessions, wait until we have the customSessionCourseId
+      if (isCustomSession && !customSessionCourseId) {
+        console.log('KnowledgeBaseTab: Waiting for customSessionCourseId...');
+        setIsLoading(false);
+        return;
+      }
+      
       setIsLoading(true)
       setError(null)
       try {
-        // Ensure courseId is valid before making the request
-        if (!courseId || courseId.trim() === '') {
+        
+        // For regular course pages or custom sessions with specific course filter
+        if (!effectiveCourseId || effectiveCourseId.trim() === '') {
+          console.error('Invalid or missing course ID:', { courseId, customSessionCourseId, effectiveCourseId });
           throw new Error('Invalid course ID');
         }
         
-        console.log(`KnowledgeBaseTab: Sending request to /api/courses/${courseId}/materials`)
-        const response = await fetch(`/api/courses/${courseId}/materials`)
+        console.log(`KnowledgeBaseTab: Sending request to /api/courses/${effectiveCourseId}/materials`)
+        const response = await fetch(`/api/courses/${effectiveCourseId}/materials`)
         
         console.log(`KnowledgeBaseTab: Response status:`, response.status)
         
@@ -142,7 +160,7 @@ export function KnowledgeBaseTab({ courseId }: KnowledgeBaseTabProps) {
     }
     
     fetchMaterials()
-  }, [courseId])
+  }, [courseId, customSessionCourseId, updateSelectedMaterials])
 
   const toggleItem = async (id: string) => {
     // Update the items list with the toggled item

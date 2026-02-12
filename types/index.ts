@@ -146,3 +146,14 @@ export interface AIInsight {
     type: 'assignment' | 'quiz' | 'exam' | 'discussion'
   }
 }
+
+export interface CustomStudySession {
+  id: string
+  name: string
+  description: string
+  icon: string
+  courseId: string
+  createdAt: string
+  lastAccessed: string
+  materials: StudyMaterial[]
+}

@@ -11,6 +11,16 @@ import { ChatSessionProvider } from '@/context/ChatSessionContext'
 interface PreparationLayoutProps {
   courseId: string
   deadlineId: string
+  customSession?: {
+    id: string
+    name: string
+    description: string
+    icon: string
+    courseId: string
+    createdAt: string
+    lastAccessed: string
+    materials: any[]
+  }
 }
 
 interface CourseInfo {
@@ -24,7 +34,7 @@ interface DeadlineInfo {
   dueDate: Date
 }
 
-export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutProps) {
+export function PreparationLayout({ courseId, deadlineId, customSession }: PreparationLayoutProps) {
   const [courseInfo, setCourseInfo] = useState<CourseInfo>({ name: 'Loading...', code: '...' })
   const [deadlineInfo, setDeadlineInfo] = useState<DeadlineInfo | null>(null)
   const [courseColor, setCourseColor] = useState('#8C1D40')
@@ -41,7 +51,21 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
     const fetchData = async () => {
       setLoading(true)
       try {
-        // Fetch course info
+        // Handle custom session
+        if (courseId === 'custom' && customSession) {
+          setCourseInfo({
+            name: customSession.name,
+            code: 'Custom Study'
+          })
+          
+          // Use a fixed color for custom sessions
+          setCourseColor('#6B46C1') // Purple for custom sessions
+          
+          setLoading(false)
+          return
+        }
+        
+        // Fetch course info for regular sessions
         const coursesResponse = await fetch('/api/courses')
         const coursesData = await coursesResponse.json()
         
@@ -90,7 +114,7 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
     }
     
     fetchData()
-  }, [courseId, deadlineId])
+  }, [courseId, deadlineId, customSession])
   
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -147,7 +171,7 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
             style={{ width: `${leftPanelWidth}%` }}
             className="bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 relative"
           >
-            <LeftPanel courseId={courseId} deadlineId={deadlineId} />
+            <LeftPanel courseId={courseId} deadlineId={deadlineId} customSession={customSession} />
         </div>
 
         {/* Left Resize Handle */}
@@ -167,7 +191,7 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
             courseId={courseId} 
             deadlineId={deadlineId} 
             courseName={courseInfo.name} 
-            deadlineTitle={deadlineInfo?.title || 'Assignment'} 
+            deadlineTitle={customSession ? customSession.description || 'Study Session' : (deadlineInfo?.title || 'Assignment')} 
           />
         </div>
 

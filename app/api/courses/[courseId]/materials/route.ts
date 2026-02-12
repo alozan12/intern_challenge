@@ -10,11 +10,12 @@ console.log('DB_PORT:', process.env.DB_PORT);
 console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '******' : 'not set');
 
 // Mock data for development - used when database connection fails
-const mockCourseMaterials = {
-  '1': [
+const mockCourseMaterials: Record<string, any[]> = {
+  // CSE 110 - Introduction to Computer Science
+  '1001': [
     {
       material_id: 'm101',
-      course_id: '1',
+      course_id: '1001',
       material_type: 'lecture',
       week: 1,
       title: 'Introduction to Course',
@@ -25,7 +26,7 @@ const mockCourseMaterials = {
     },
     {
       material_id: 'm102',
-      course_id: '1',
+      course_id: '1001',
       material_type: 'reading',
       week: 1,
       title: 'Syllabus',
@@ -36,7 +37,7 @@ const mockCourseMaterials = {
     },
     {
       material_id: 'm103',
-      course_id: '1',
+      course_id: '1001',
       material_type: 'assignment',
       week: 1,
       title: 'Introduction Discussion',
@@ -47,7 +48,7 @@ const mockCourseMaterials = {
     },
     {
       material_id: 'm104',
-      course_id: '1',
+      course_id: '1001',
       material_type: 'quiz',
       week: 1,
       title: 'Syllabus Quiz',
@@ -57,10 +58,11 @@ const mockCourseMaterials = {
       text_instruction: 'Complete this quiz to demonstrate your understanding of course policies.'
     }
   ],
-  '2': [
+  // MAT 265 - Calculus I
+  '1002': [
     {
       material_id: 'm201',
-      course_id: '2',
+      course_id: '1002',
       material_type: 'lecture',
       week: 1,
       title: 'Basic Concepts',
@@ -71,7 +73,7 @@ const mockCourseMaterials = {
     },
     {
       material_id: 'm202',
-      course_id: '2',
+      course_id: '1002',
       material_type: 'reading',
       week: 1,
       title: 'Chapter 1: Foundations',
@@ -82,7 +84,7 @@ const mockCourseMaterials = {
     },
     {
       material_id: 'm203',
-      course_id: '2',
+      course_id: '1002',
       material_type: 'module',
       week: 2,
       title: 'Advanced Topics',
@@ -92,10 +94,11 @@ const mockCourseMaterials = {
       text_instruction: 'This module covers more advanced concepts building on the basics.'
     }
   ],
-  '3': [
+  // ENG 101 - English Composition
+  '1003': [
     {
       material_id: 'm301',
-      course_id: '3',
+      course_id: '1003',
       material_type: 'lecture',
       week: 1,
       title: 'Course Overview',
@@ -106,7 +109,7 @@ const mockCourseMaterials = {
     },
     {
       material_id: 'm302',
-      course_id: '3',
+      course_id: '1003',
       material_type: 'assignment',
       week: 1,
       title: 'Initial Assessment',
@@ -117,7 +120,7 @@ const mockCourseMaterials = {
     },
     {
       material_id: 'm303',
-      course_id: '3',
+      course_id: '1003',
       material_type: 'module',
       week: 1,
       title: 'Getting Started',
@@ -127,6 +130,56 @@ const mockCourseMaterials = {
       text_instruction: 'Complete all items in this module before proceeding to the next section.'
     }
   ],
+  // CHM 113 - General Chemistry
+  '1004': [
+    {
+      material_id: 'm401',
+      course_id: '1004',
+      material_type: 'lecture',
+      week: 1,
+      title: 'Introduction to Chemistry',
+      filename: 'chem_intro.pdf',
+      canvas_url: 'https://canvas.asu.edu/courses/1004/files/intro.pdf',
+      file_url: '/files/chem_intro.pdf',
+      text_instruction: 'Introduction to chemistry fundamentals and lab safety.'
+    },
+    {
+      material_id: 'm402',
+      course_id: '1004',
+      material_type: 'assignment',
+      week: 1,
+      title: 'Lab Safety Quiz',
+      filename: '',
+      canvas_url: 'https://canvas.asu.edu/courses/1004/quizzes/safety',
+      file_url: '',
+      text_instruction: 'Complete this quiz on lab safety procedures before your first lab session.'
+    }
+  ],
+  // PSY 101 - Introduction to Psychology
+  '1005': [
+    {
+      material_id: 'm501',
+      course_id: '1005',
+      material_type: 'lecture',
+      week: 1,
+      title: 'What is Psychology?',
+      filename: 'psych_intro.pptx',
+      canvas_url: 'https://canvas.asu.edu/courses/1005/files/intro.pptx',
+      file_url: '/files/psych_intro.pptx',
+      text_instruction: 'Introduction to the field of psychology and its major perspectives.'
+    },
+    {
+      material_id: 'm502',
+      course_id: '1005',
+      material_type: 'reading',
+      week: 1,
+      title: 'Chapter 1: The Science of Psychology',
+      filename: 'chapter1.pdf',
+      canvas_url: 'https://canvas.asu.edu/courses/1005/files/ch1.pdf',
+      file_url: '/files/chapter1.pdf',
+      text_instruction: 'Read Chapter 1 and be prepared to discuss in class.'
+    }
+  ]
 };
 
 // Test database connection explicitly

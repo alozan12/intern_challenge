@@ -9,7 +9,7 @@ import { ViewModeProvider } from '@/context/ViewModeContext'
 
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const showSidebar = pathname === '/' || pathname === '/calendar' || pathname === '/analytics' || pathname === '/settings' || pathname === '/insights' || pathname.startsWith('/preparation')
+  const showSidebar = pathname === '/' || pathname === '/calendar' || pathname === '/analytics' || pathname === '/settings' || pathname === '/insights' || pathname.startsWith('/preparation') || pathname === '/library'
   const isPreparationPage = pathname.startsWith('/preparation')
   
   // Only minimize the sidebar on preparation pages
