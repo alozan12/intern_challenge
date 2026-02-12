@@ -20,6 +20,7 @@ import { format } from 'date-fns'
 import { useViewMode } from '@/context/ViewModeContext'
 import { useSelectedMaterials } from '@/context/SelectedMaterialsContext'
 import { sendQueryToCreateAI } from '@/lib/createai-api'
+import { MarkdownMessage } from '@/components/ui/MarkdownMessage'
 
 interface ChatPanelProps {
   courseId: string
@@ -445,7 +446,14 @@ export function ChatPanel({ courseId, deadlineId, courseName, deadlineTitle }: C
                     : "bg-gray-100 text-gray-900"
                 )}
               >
-                <p className={cn("whitespace-pre-wrap", viewMode === 'compact' ? 'text-xs' : 'text-sm')}>{message.content}</p>
+                <MarkdownMessage 
+                  content={message.content} 
+                  isUser={message.role === 'user'}
+                  className={cn(
+                    message.role === 'user' ? "prose-invert" : "",
+                    viewMode === 'compact' ? 'text-xs' : 'text-sm'
+                  )}
+                />
                 <p className={cn(
                   viewMode === 'compact' ? 'text-[10px] mt-0.5' : 'text-xs mt-1',
                   message.role === 'user' ? "text-red-200" : "text-gray-500"

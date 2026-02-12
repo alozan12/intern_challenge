@@ -147,7 +147,7 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
             style={{ width: `${leftPanelWidth}%` }}
             className="bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 relative"
           >
-            <LeftPanel courseId={courseId} />
+            <LeftPanel courseId={courseId} deadlineId={deadlineId} />
         </div>
 
         {/* Left Resize Handle */}

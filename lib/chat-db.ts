@@ -6,6 +6,8 @@ export interface DbChatSession {
   session_id: string;
   user_id: string; // bigint is stored as string in PostgreSQL node driver
   title: string | null;
+  course_id: string | null;
+  deadline_id: string | null;
   created_at: Date;
   updated_at: Date;
   is_deleted: boolean;
@@ -27,16 +29,18 @@ export interface DbChatMessage {
 export async function createChatSession(
   session_id: string,
   user_id: string | null,
-  title?: string | null
+  title?: string | null,
+  course_id?: string | null,
+  deadline_id?: string | null
 ): Promise<DbChatSession> {
   try {
     const result = await query(
       `INSERT INTO chat_sessions 
-        (session_id, user_id, title, created_at, updated_at, is_deleted) 
+        (session_id, user_id, title, course_id, deadline_id, created_at, updated_at, is_deleted) 
       VALUES 
-        ($1, $2, $3, NOW(), NOW(), false)
+        ($1, $2, $3, $4, $5, NOW(), NOW(), false)
       RETURNING *`,
-      [session_id, user_id, title || `Chat Session ${new Date().toLocaleDateString()}`]
+      [session_id, user_id, title || `Chat Session ${new Date().toLocaleDateString()}`, course_id, deadline_id]
     );
 
     if (result.rows.length === 0) {
@@ -147,6 +151,31 @@ export async function getStudentChatSessions(user_id: string): Promise<DbChatSes
   }
 }
 
+/**
+ * Gets chat sessions for a student filtered by course and deadline
+ */
+export async function getSessionsByDeadline(
+  user_id: string, 
+  course_id: string, 
+  deadline_id: string
+): Promise<DbChatSession[]> {
+  try {
+    const result = await query(
+      `SELECT * FROM chat_sessions 
+       WHERE user_id = $1 
+       AND course_id = $2 
+       AND deadline_id = $3 
+       AND (is_deleted = false OR is_deleted IS NULL) 
+       ORDER BY updated_at DESC`,
+      [user_id, course_id, deadline_id]
+    );
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting deadline-specific chat sessions:', error);
+    throw error;
+  }
+}
+
 // Note: The database doesn't have course_id in chat_sessions table
 // Sessions are associated with users, not courses
 
@@ -242,7 +271,7 @@ export async function saveChatSessionWithMessages(
   session_id: string,
   user_id: string | null,
   course_id: string | null,
-  preparation_page_id: string | null,
+  deadline_id: string | null,
   study_mode: boolean,
   messages: ChatMessage[],
   title?: string
@@ -254,7 +283,7 @@ export async function saveChatSessionWithMessages(
     if (!existingSession) {
       // Create new session if it doesn't exist
       const sessionTitle = title || `${study_mode ? 'Study Mode: ' : ''}Chat Session ${new Date().toLocaleDateString()}`;
-      await createChatSession(session_id, user_id, sessionTitle);
+      await createChatSession(session_id, user_id, sessionTitle, course_id, deadline_id);
     } else {
       // Update existing session - update title if provided
       const updates: any = { updated_at: new Date() };

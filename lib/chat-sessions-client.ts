@@ -8,14 +8,15 @@ import { ChatMessage, SessionHistory } from '@/types';
  */
 
 /**
- * Gets session history for a student's course
+ * Gets session history for a student's course and deadline
  */
 export async function getSessionHistory(
   studentId: string,
-  courseId: string
+  courseId: string,
+  deadlineId: string
 ): Promise<SessionHistory[]> {
   try {
-    const response = await fetch(`/api/chat-sessions?studentId=${encodeURIComponent(studentId)}&courseId=${encodeURIComponent(courseId)}`);
+    const response = await fetch(`/api/chat-sessions?studentId=${encodeURIComponent(studentId)}&courseId=${encodeURIComponent(courseId)}&deadlineId=${encodeURIComponent(deadlineId)}`);
     
     if (!response.ok) {
       console.error('Failed to get session history:', response.status, response.statusText);
@@ -29,16 +30,16 @@ export async function getSessionHistory(
     }
     
     // Convert database sessions to SessionHistory format
-    return data.sessions.map(session => ({
+    return data.sessions.map((session: any) => ({
       id: session.session_id,
-      courseId: courseId, // Use the courseId from the request since DB doesn't store it
-      courseName: getCourseNameFromId(courseId),
+      courseId: session.course_id || courseId,
+      courseName: getCourseNameFromId(session.course_id || courseId),
       title: session.title || `Chat Session ${new Date(session.created_at).toLocaleString()}`,
       date: new Date(session.updated_at),
       type: session.title?.includes('Study Mode') ? 'study' : 'practice',
       duration: calculateSessionDuration(session.created_at, session.updated_at),
       materials: []
-    })).sort((a, b) => b.date.getTime() - a.date.getTime());
+    })).sort((a: SessionHistory, b: SessionHistory) => b.date.getTime() - a.date.getTime());
   } catch (error) {
     console.error('Error getting session history:', error);
     return [];
@@ -95,7 +96,7 @@ export async function saveChatSessionWithMessages(
   sessionId: string,
   studentId: string,
   courseId: string,
-  preparationId: string,
+  deadlineId: string,
   studyMode: boolean,
   messages: ChatMessage[],
   title?: string
@@ -110,7 +111,7 @@ export async function saveChatSessionWithMessages(
         session_id: sessionId,
         student_id: studentId,
         course_id: courseId,
-        preparation_page_id: preparationId,
+        deadline_id: deadlineId,
         study_mode: studyMode,
         messages: messages,
         title: title

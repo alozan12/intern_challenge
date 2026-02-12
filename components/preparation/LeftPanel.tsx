@@ -8,9 +8,10 @@ import { useViewMode } from '@/context/ViewModeContext'
 
 interface LeftPanelProps {
   courseId: string
+  deadlineId: string
 }
 
-export function LeftPanel({ courseId }: LeftPanelProps) {
+export function LeftPanel({ courseId, deadlineId }: LeftPanelProps) {
   const [activeTab, setActiveTab] = useState<'history' | 'knowledge'>('knowledge')
   const { viewMode } = useViewMode()
 
@@ -49,7 +50,7 @@ export function LeftPanel({ courseId }: LeftPanelProps) {
       {/* Tab Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === 'history' ? (
-          <SessionHistoryTab courseId={courseId} />
+          <SessionHistoryTab courseId={courseId} deadlineId={deadlineId} />
         ) : (
           <KnowledgeBaseTab courseId={courseId} />
         )}

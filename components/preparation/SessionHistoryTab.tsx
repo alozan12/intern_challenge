@@ -10,12 +10,13 @@ import { useChatSession } from '@/context/ChatSessionContext'
 
 interface SessionHistoryTabProps {
   courseId: string
+  deadlineId: string
 }
 
 // Default student ID - would come from auth in real app
 const STUDENT_ID = '987655';
 
-export function SessionHistoryTab({ courseId }: SessionHistoryTabProps) {
+export function SessionHistoryTab({ courseId, deadlineId }: SessionHistoryTabProps) {
   const { activeSessionId, loadSession } = useChatSession()
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(activeSessionId)
   const [courseSessions, setCourseSessions] = useState<SessionHistory[]>([])
@@ -36,7 +37,7 @@ export function SessionHistoryTab({ courseId }: SessionHistoryTabProps) {
       setError(null)
       
       try {
-        const sessions = await getSessionHistory(STUDENT_ID, courseId)
+        const sessions = await getSessionHistory(STUDENT_ID, courseId, deadlineId)
         setCourseSessions(sessions)
       } catch (err) {
         console.error('Failed to load session history:', err)
@@ -70,14 +71,14 @@ export function SessionHistoryTab({ courseId }: SessionHistoryTabProps) {
       window.removeEventListener('refresh-sessions', handleRefreshSessions)
       clearInterval(intervalId)
     }
-  }, [courseId])
+  }, [courseId, deadlineId])
   
   // Function to refresh sessions
   const refreshSessions = async () => {
     setError(null)
     
     try {
-      const sessions = await getSessionHistory(STUDENT_ID, courseId)
+      const sessions = await getSessionHistory(STUDENT_ID, courseId, deadlineId)
       setCourseSessions(sessions)
     } catch (err) {
       console.error('Failed to refresh session history:', err)

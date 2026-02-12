@@ -4,6 +4,7 @@ import {
   updateChatSession, 
   getChatSession,
   getStudentChatSessions,
+  getSessionsByDeadline,
   saveChatMessage, 
   getChatMessages,
   dbMessagesToClientFormat,
@@ -116,6 +117,7 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const studentId = url.searchParams.get('studentId');
     const courseId = url.searchParams.get('courseId');
+    const deadlineId = url.searchParams.get('deadlineId');
     const sessionId = url.searchParams.get('sessionId');
     
     console.log('API Request:', { studentId, courseId, sessionId });
@@ -155,8 +157,14 @@ export async function GET(req: NextRequest) {
     }
     
     // Get sessions from database
-    // Note: The database doesn't support filtering by course, only by user
-    const sessions = await getStudentChatSessions(studentId);
+    let sessions;
+    if (deadlineId) {
+      // If deadlineId is provided, get sessions specific to that deadline
+      sessions = await getSessionsByDeadline(studentId, courseId, deadlineId);
+    } else {
+      // Otherwise get all sessions for the student
+      sessions = await getStudentChatSessions(studentId);
+    }
     
     console.log('Returning sessions:', {
       count: sessions.length,
@@ -188,7 +196,7 @@ export async function POST(req: NextRequest) {
       session_id, 
       student_id, 
       course_id, 
-      preparation_page_id, 
+      deadline_id,
       study_mode,
       messages,
       title
@@ -226,7 +234,9 @@ export async function POST(req: NextRequest) {
       session = await createChatSession(
         session_id,
         student_id,
-        sessionTitle
+        sessionTitle,
+        course_id,
+        deadline_id
       );
     }
     

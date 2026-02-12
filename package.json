@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.1.39",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "ai": "^6.0.77",
     "clsx": "^2.1.0",
     "date-fns": "^3.0.0",
@@ -24,6 +25,9 @@
     "pg": "^8.18.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^2.2.0"
   },
   "devDependencies": {
