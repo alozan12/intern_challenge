@@ -603,7 +603,7 @@ export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}
     }
     if (pathname.startsWith('/analytics')) return "Analytics";
     if (pathname.startsWith('/calendar')) return "Academic Calendar";
-    if (pathname.startsWith('/library')) return "My Library";
+    if (pathname.startsWith('/library')) return "Backpack";
     if (pathname.startsWith('/settings')) return "Settings";
     if (pathname.startsWith('/insights')) return "AI Study Insights";
     return "";

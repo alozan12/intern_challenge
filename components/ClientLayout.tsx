@@ -10,22 +10,30 @@ import { ViewModeProvider } from '@/context/ViewModeContext'
 export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const showSidebar = pathname === '/' || pathname === '/calendar' || pathname === '/analytics' || pathname === '/settings' || pathname === '/insights' || pathname.startsWith('/preparation') || pathname === '/library'
-  const isPreparationPage = pathname.startsWith('/preparation')
   
-  // Only minimize the sidebar on preparation pages
+  // Determine if we're in a working session (where minimization should be allowed)
+  const isWorkingSession = 
+    // Specific preparation pages (with courseId and deadlineId)
+    (pathname.startsWith('/preparation/') && pathname.split('/').length > 3) ||
+    // Custom sessions
+    pathname.startsWith('/preparation/custom/') ||
+    // In library viewing a specific session
+    (pathname.startsWith('/library/') && pathname.split('/').length > 2)
+  
+  // Sidebar minimized state
   const [isMinimized, setIsMinimized] = useState(false)
   
-  // Set sidebar to minimized by default in preparation workspace
+  // Set appropriate sidebar state when changing pages
   useEffect(() => {
-    if (isPreparationPage) {
-      setIsMinimized(true)
+    if (isWorkingSession) {
+      setIsMinimized(true) // Minimized by default in working sessions
     } else {
-      setIsMinimized(false)
+      setIsMinimized(false) // Expanded in selection/browsing pages
     }
-  }, [isPreparationPage])
+  }, [pathname, isWorkingSession])
   
   const handleToggleSidebar = () => {
-    if (isPreparationPage) {
+    if (isWorkingSession) {
       setIsMinimized(!isMinimized)
     }
   }
@@ -37,15 +45,15 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         <div className="h-screen bg-gray-50 flex overflow-hidden">
           <div className="flex-shrink-0 h-screen">
             <Sidebar 
-              isMinimized={isPreparationPage ? isMinimized : false}
-              onToggle={isPreparationPage ? handleToggleSidebar : undefined} 
+              isMinimized={isWorkingSession ? isMinimized : false}
+              onToggle={isWorkingSession ? handleToggleSidebar : undefined} 
             />
           </div>
           <div className="flex-1 flex flex-col h-screen">
             <div className="sticky top-0 z-40 bg-white">
               <TopBar 
-                onToggleSidebar={isPreparationPage ? handleToggleSidebar : undefined}
-                isSidebarMinimized={isPreparationPage ? isMinimized : false}
+                onToggleSidebar={isWorkingSession ? handleToggleSidebar : undefined}
+                isSidebarMinimized={isWorkingSession ? isMinimized : false}
               />
             </div>
             <main className="flex-1 overflow-y-auto">
