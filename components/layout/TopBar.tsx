@@ -335,14 +335,52 @@ export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}
   // Sync state
   const [isSyncing, setIsSyncing] = useState(false)
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
+  const [courseName, setCourseName] = useState<string | null>(null)
   
   // Get current date and time-appropriate greeting (always calculate for the date)
   const { formattedDate, greeting } = getTimeBasedGreeting();
   
+  // Fetch course info for preparation pages
+  useEffect(() => {
+    const fetchCourseInfo = async () => {
+      // Check if we're on a preparation page with a course ID
+      const preparationMatch = pathname.match(/\/preparation\/([^/]+)/);
+      if (preparationMatch && preparationMatch[1]) {
+        const courseId = preparationMatch[1];
+        
+        try {
+          // Fetch course info from API
+          const coursesResponse = await fetch('/api/courses');
+          const coursesData = await coursesResponse.json();
+          
+          if (coursesData.success) {
+            const course = coursesData.courses.find((c: any) => c.course_id === courseId);
+            if (course) {
+              setCourseName(`${course.course_code}: ${course.course_name}`);
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching course info for top bar:', err);
+        }
+      }
+      
+      // If we're not on a course page or couldn't fetch data, clear the course name
+      setCourseName(null);
+    };
+    
+    fetchCourseInfo();
+  }, [pathname]);
+  
   // Get page title based on current path
   const getPageTitle = () => {
     if (isLandingPage) return `${greeting}, Sun Devil!`;
-    if (pathname.startsWith('/preparation')) return "Preparation Center";
+    if (pathname.startsWith('/preparation')) {
+      // If we have a specific course name, use that
+      if (courseName) return courseName;
+      // Otherwise fall back to generic title
+      return "Preparation Center";
+    }
     if (pathname.startsWith('/analytics')) return "Analytics";
     if (pathname.startsWith('/calendar')) return "Academic Calendar";
     if (pathname.startsWith('/settings')) return "Settings";

@@ -3,6 +3,16 @@ import { generateInsight, queryCreateAI } from '@/lib/createAI';
 import { createAIStream } from '@/lib/compatAI';
 import { getLearningGaps as getMockLearningGaps } from '@/mocks/learning-gaps';
 import { StreamResponse } from '@/lib/utils';
+// Import prompt templates
+import {
+  baseInsightsSystemPrompt,
+  performanceInsightsPrompt,
+  performanceUserPrompt,
+  gapsInsightsPrompt,
+  gapsUserPrompt,
+  recommendationInsightsPrompt,
+  recommendationUserPrompt
+} from '@/prompts/insights';
 // TextEncoder for the Edge runtime
 const encoder = new TextEncoder();
 
@@ -96,54 +106,25 @@ export async function POST(req: NextRequest) {
         courseId: item.course_id
       }));
     
-    // Set up system prompt and query based on insight type
-    let systemPrompt = 'You are the ASU Study Coach insights generator, an AI assistant that analyzes student performance data to provide personalized insights and recommendations.';
+    // Set up system prompt and query based on insight type using imported templates
+    let systemPrompt = '';
     let userPrompt = '';
     
     switch (insightType) {
       case 'performance':
-        systemPrompt += '\n\nYour task is to analyze student performance data and provide concise, actionable insights that help the student improve their learning.';
-        systemPrompt += '\n\nYou have access to:';
-        systemPrompt += '\n- Student profile information';
-        systemPrompt += '\n- Course performance data (quizzes, assignments, etc.)';
-        systemPrompt += '\n- Learning gaps identified in their work';
-        systemPrompt += '\n- Overall performance metrics';
-        systemPrompt += '\n\nFormat your response as a JSON object with the following fields:';
-        systemPrompt += '\n- summary: A concise overview of their performance (1-2 sentences)';
-        systemPrompt += '\n- strengths: An array of topics or skills they are performing well in';
-        systemPrompt += '\n- weaknesses: An array of topics or skills they need to improve on';
-        systemPrompt += '\n- advice: Specific, actionable advice for improvement (1-2 sentences)';
-        userPrompt = 'Generate performance insights based on this student\'s data.';
+        systemPrompt = performanceInsightsPrompt;
+        userPrompt = performanceUserPrompt;
         break;
         
       case 'gaps':
-        systemPrompt += '\n\nYour task is to identify specific learning gaps based on the student\'s performance data.';
-        systemPrompt += '\n\nYou have access to:';
-        systemPrompt += '\n- Student\'s performance on quizzes and assignments';
-        systemPrompt += '\n- Previously identified learning gaps';
-        systemPrompt += '\n- Course materials and topics';
-        systemPrompt += '\n\nFormat your response as a JSON object with a "gaps" array containing objects with these fields:';
-        systemPrompt += '\n- topic: The specific topic with a knowledge gap';
-        systemPrompt += '\n- confidence: The student\'s confidence level ("low", "medium", or "high")';
-        systemPrompt += '\n- recommended_review: Boolean indicating if review is recommended';
-        userPrompt = 'Identify specific learning gaps for this student based on their performance data.';
+        systemPrompt = gapsInsightsPrompt;
+        userPrompt = gapsUserPrompt;
         break;
         
       case 'recommendation':
       default:
-        systemPrompt += '\n\nYour task is to generate personalized study recommendations based on the student\'s performance, learning gaps, and upcoming deadlines.';
-        systemPrompt += '\n\nYou have access to:';
-        systemPrompt += '\n- Student profile and preferences';
-        systemPrompt += '\n- Course performance data';
-        systemPrompt += '\n- Identified learning gaps';
-        systemPrompt += '\n\nFormat your response as a JSON object with a "recommendations" array containing 2-3 recommendation objects with these fields:';
-        systemPrompt += '\n- title: Brief, engaging title for the recommendation (e.g., "Master Tree Traversals")';
-        systemPrompt += '\n- description: 1-2 sentence description of the recommendation';
-        systemPrompt += '\n- type: Either "quick" (for short activities) or "focused" (for longer sessions)';
-        systemPrompt += '\n- duration: Either 10 or 30 (minutes)';
-        systemPrompt += '\n- topics: Array of relevant topics covered by this recommendation';
-        systemPrompt += '\n- priority: "high", "medium", or "low" based on urgency and importance';
-        userPrompt = 'Generate 2-3 personalized study recommendations for this student based on their data.';
+        systemPrompt = recommendationInsightsPrompt;
+        userPrompt = recommendationUserPrompt;
         break;
     }
     

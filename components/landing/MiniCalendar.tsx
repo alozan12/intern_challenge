@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns'
 import Link from 'next/link'
@@ -8,10 +8,41 @@ import { Deadline } from '@/types'
 import { cn } from '@/lib/utils'
 
 interface MiniCalendarProps {
-  deadlines: Deadline[]
+  deadlines?: Deadline[]
+  useLiveData?: boolean
 }
 
-export function MiniCalendar({ deadlines }: MiniCalendarProps) {
+export function MiniCalendar({ deadlines = [], useLiveData = true }: MiniCalendarProps) {
+  const [liveDeadlines, setLiveDeadlines] = useState<any[]>([])
+  const [, setIsLoading] = useState(useLiveData)
+
+  useEffect(() => {
+    if (useLiveData) {
+      const fetchDeadlines = async () => {
+        try {
+          const response = await fetch('/api/deadlines')
+          const data = await response.json()
+          
+          if (data.success && data.deadlines) {
+            const processedDeadlines = data.deadlines.map((deadline: any) => ({
+              ...deadline,
+              dueDate: deadline.dueDate ? new Date(deadline.dueDate) : new Date()
+            }))
+            
+            setLiveDeadlines(processedDeadlines)
+          }
+        } catch (err) {
+          console.error('Error fetching deadlines for calendar:', err)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+      
+      fetchDeadlines()
+    }
+  }, [useLiveData])
+  
+  const displayDeadlines = useLiveData ? liveDeadlines : deadlines
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
   const monthStart = startOfMonth(currentMonth)
@@ -29,7 +60,7 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
   }
 
   const getDeadlinesForDay = (day: Date) => {
-    return deadlines.filter(deadline => 
+    return displayDeadlines.filter(deadline => 
       isSameDay(new Date(deadline.dueDate), day)
     )
   }
@@ -88,6 +119,7 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
           const hasDeadlines = dayDeadlines.length > 0
           const isCurrentDay = isToday(day)
 
+          // Always link to the calendar page with date parameter
           return (
             <Link
               key={day.toISOString()}
@@ -99,6 +131,7 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
                 !isCurrentDay && !hasDeadlines && "hover:bg-gray-100",
                 !isSameMonth(day, currentMonth) && "text-gray-300"
               )}
+              title={hasDeadlines ? `${dayDeadlines.length} deadline(s): ${dayDeadlines.map(d => d.title).join(', ')}` : undefined}
             >
               <span className="text-sm font-medium">{format(day, 'd')}</span>
               {hasDeadlines && (
@@ -113,7 +146,7 @@ export function MiniCalendar({ deadlines }: MiniCalendarProps) {
                     />
                   ))}
                 </div>
-              )}
+              )}  
             </Link>
           )
         })}
