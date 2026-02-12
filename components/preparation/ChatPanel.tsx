@@ -1,15 +1,31 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Send, Paperclip, Mic, BookOpen, Plus, X } from 'lucide-react'
+import { saveChatSessionWithMessages } from '@/lib/chat-sessions-client'
+import { useChatSession } from '@/context/ChatSessionContext'
+
+// Study mode custom prompt
+const studyModeCustomPrompt = `You are now in STUDY MODE. In this mode, your responses should:
+1. Guide the student through concepts rather than providing direct answers
+2. Ask the student to demonstrate their understanding first
+3. Provide scaffolded hints rather than complete solutions
+4. Include retrieval practice questions to reinforce learning
+5. Be concise and clear in your explanations
+
+The student has explicitly requested study mode, so maintain this approach until instructed otherwise.`
 import { ChatMessage } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { useViewMode } from '@/context/ViewModeContext'
+import { useSelectedMaterials } from '@/context/SelectedMaterialsContext'
+import { sendQueryToCreateAI } from '@/lib/createai-api'
 
 interface ChatPanelProps {
   courseId: string
   deadlineId: string
+  courseName?: string
+  deadlineTitle?: string
 }
 
 // Mock course data - in real app would come from API
@@ -24,25 +40,61 @@ const getCourseInfo = (courseId: string) => {
   return courses[courseId] || { name: 'Course', code: 'COURSE' }
 }
 
-export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
-  const courseInfo = getCourseInfo(courseId)
+export function ChatPanel({ courseId, deadlineId, courseName, deadlineTitle }: ChatPanelProps) {
+  // Use provided course info or fall back to mock data
+  const courseInfo = courseName ? { name: courseName, code: getCourseInfo(courseId).code } : getCourseInfo(courseId)
   const { viewMode } = useViewMode()
-  const [isStudyMode, setIsStudyMode] = useState(false)
+  const { getSelectedMaterialsMetadata, selectedMaterials } = useSelectedMaterials()
+  
+  // Get chat session context
+  const { 
+    activeSessionId,
+    messages, 
+    setMessages,
+    isStudyMode, 
+    setIsStudyMode,
+    createNewSession
+  } = useChatSession()
+  
+  // Local UI state
   const [showModeNotification, setShowModeNotification] = useState(false)
   const [notificationType, setNotificationType] = useState<'enter' | 'exit' | null>(null)
   const [showModeToggle, setShowModeToggle] = useState(false)
+  const [showNewSessionAnimation, setShowNewSessionAnimation] = useState(false)
+  
+  // Generate a UUID-like session ID
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+  
+  // Create a session ID if none exists in context
+  const [localSessionId, setLocalSessionId] = useState(generateUUID())
+  const sessionId = activeSessionId || localSessionId
+  
+  // Count selected materials
+  const selectedCount = selectedMaterials.filter(item => item.isSelected).length
   
   // Initialize messages with course-specific content
   const createInitialMessage = () => ({
     id: Date.now().toString(),
     role: 'assistant' as const,
-    content: `Hello! I'm your AI Study Coach for ${courseInfo.code}. I'm here to help you prepare for your upcoming assignment. What specific topics would you like to review?`,
+    content: `Hello! I'm your AI Study Coach for ${courseInfo.name}. I'm here to help you prepare for ${deadlineTitle || 'your upcoming assignment'}. What specific topics would you like to review?`,
     timestamp: new Date()
   })
   
-  const initialMessages: ChatMessage[] = [createInitialMessage()]
+  // Initialize if no active session exists
+  useEffect(() => {
+    if (!activeSessionId && messages.length === 0) {
+      // Create new session with initial message
+      const initialMsg = createInitialMessage()
+      createNewSession(localSessionId, initialMsg)
+    }
+  }, [activeSessionId]) // Only re-run if activeSessionId changes
   
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
   const [pastSessions, setPastSessions] = useState<ChatMessage[][]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -72,6 +124,33 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
     }
   }, [])
 
+  // Save messages to database
+  const saveMessagesToDb = useCallback(async (updatedMessages: ChatMessage[], sessionTitle?: string) => {
+    try {
+      // Don't save if there are no messages or only the initial message
+      if (updatedMessages.length === 0) {
+        console.log('No messages to save');
+        return;
+      }
+      
+      console.log('Saving to DB - sessionId:', sessionId, 'messages:', updatedMessages.length);
+      await saveChatSessionWithMessages(
+        sessionId,
+        '987655', // studentId
+        courseId,
+        deadlineId,
+        isStudyMode,
+        updatedMessages,
+        sessionTitle
+      );
+      console.log('Successfully saved messages to database');
+      // Trigger session history refresh after successful save
+      window.dispatchEvent(new CustomEvent('refresh-sessions'));
+    } catch (error) {
+      console.error('Error saving messages to database:', error);
+    }
+  }, [sessionId, courseId, deadlineId, isStudyMode]);
+  
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
 
@@ -82,43 +161,135 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
       timestamp: new Date()
     }
 
-    setMessages(prev => [...prev, userMessage])
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages)
     setInput('')
     setIsLoading(true)
+    
+    // Check if this is the first user message and update session title
+    const isFirstUserMessage = messages.filter(m => m.role === 'user').length === 0;
+    if (isFirstUserMessage) {
+      // Update session title with first 50 characters of user message
+      const sessionTitle = userMessage.content.substring(0, 50) + (userMessage.content.length > 50 ? '...' : '');
+      console.log('Updating session title to:', sessionTitle);
+      
+      // We'll need to pass the title to the save function
+      await saveChatSessionWithMessages(
+        sessionId,
+        '987655', // studentId
+        courseId,
+        deadlineId,
+        isStudyMode,
+        updatedMessages,
+        sessionTitle // Pass the title
+      );
+    } else {
+      // Save to database immediately after user message
+      saveMessagesToDb(updatedMessages);
+    }
 
     try {
-      // Call our API endpoint
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content })),
-          studentId: '987654', // Example student ID
-          courseId: courseId,
-          stream: false,
-          // Include study mode flag - updated dynamically from state
-          studyMode: isStudyMode,
-          // Added for error handling
-          fallbackToMock: true
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to get response from AI')
-      }
-
-      const data = await response.json()
+      // Get selected materials metadata
+      const { material_ids, course_ids } = getSelectedMaterialsMetadata()
       
-      const aiMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date()
-      }
+      // Log the metadata being sent
+      console.log('=== CreateAI Metadata ===');
+      console.log('Selected Materials Count:', material_ids.length);
+      console.log('Material IDs:', material_ids);
+      console.log('Course IDs:', course_ids);
+      console.log('Student ID (hardcoded):', '987655');
+      console.log('Session ID:', sessionId);
+      console.log('========================');
       
-      setMessages(prev => [...prev, aiMessage])
+      // Use CreateAI API if materials are selected, otherwise use the existing chat API
+      if (material_ids.length > 0) {
+        console.log('Using CreateAI API with selected materials')
+        
+        // Filter by source name if in study mode
+        const sourceNames = isStudyMode ? 
+          // Example filter - in a real app this would come from materials metadata
+          ['Lecture Notes', 'Textbook', 'Assignment Instructions'] : 
+          []
+          
+        const createAIResponse = await sendQueryToCreateAI(
+          userMessage.content,
+          material_ids,
+          course_ids,
+          sessionId,
+          sourceNames,
+          {
+            // Study mode specific parameters
+            temperature: isStudyMode ? 0.3 : 0.7,
+            system_prompt: isStudyMode ? studyModeCustomPrompt : undefined,
+            top_k: isStudyMode ? 8 : 5, // Retrieve more context in study mode
+            reranker: true,
+            // Additional parameters specific to study mode
+            attempt_first_guidance: isStudyMode,
+            include_practice_questions: isStudyMode
+          }
+        )
+        
+        if (!createAIResponse.success) {
+          throw new Error(createAIResponse.error || 'Failed to get response from CreateAI')
+        }
+        
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: createAIResponse.response || 'I couldn\'t generate a response.',
+          timestamp: new Date()
+        }
+        
+        const finalMessages = [...updatedMessages, aiMessage];
+        setMessages(finalMessages);
+        
+        // Save messages to database
+        saveMessagesToDb(finalMessages);
+      } else {
+        // Fallback to existing chat API when no materials are selected
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messages: [...messages, userMessage].map(msg => ({ role: msg.role, content: msg.content })),
+            studentId: '987655', // Updated to match CreateAI student ID
+            courseId: courseId,
+            stream: false,
+            studyMode: isStudyMode,
+            sessionId: sessionId, // Use consistent sessionId
+            fallbackToMock: true,
+            override_params: {
+              temperature: isStudyMode ? 0.3 : 0.7, // Lower temperature for more focused responses in study mode
+              max_tokens: isStudyMode ? 1500 : 1000, // Allow longer responses in study mode for explanations
+              // Additional custom parameters for study mode
+              attempt_first_guidance: isStudyMode,
+              include_practice_questions: isStudyMode,
+              allow_explanations: true
+            }
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to get response from AI')
+        }
+
+        const data = await response.json()
+        
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: data.response,
+          timestamp: new Date()
+        }
+        
+        const finalMessages = [...updatedMessages, aiMessage];
+        setMessages(finalMessages);
+        
+        // Save messages to database
+        saveMessagesToDb(finalMessages);
+      }
     } catch (error) {
       console.error('Error getting AI response:', error)
       
@@ -130,7 +301,11 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
         timestamp: new Date()
       }
       
-      setMessages(prev => [...prev, errorMessage])
+      const finalMessages = [...updatedMessages, errorMessage];
+      setMessages(finalMessages);
+      
+      // Save error message to database
+      saveMessagesToDb(finalMessages);
     } finally {
       setIsLoading(false)
     }
@@ -156,13 +331,15 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                     <BookOpen className="w-4 h-4" /> Study Mode
                   </span>
                 ) : (
-                  'AI Study Coach'
+                  deadlineTitle || 'AI Study Coach'
                 )}
               </h2>
               <p className={cn("text-gray-600", viewMode === 'compact' ? 'text-xs' : 'text-sm')}>
                 {isStudyMode 
                   ? 'Interactive guided learning with practice questions' 
-                  : 'Ask questions about your course content'}
+                  : selectedCount > 0 
+                    ? `Using ${selectedCount} selected material${selectedCount !== 1 ? 's' : ''} for context`
+                    : 'Ask questions about your course content'}
               </p>
             </div>
             {isStudyMode && (
@@ -170,17 +347,38 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                 Active
               </div>
             )}
+            {selectedCount > 0 && !isStudyMode && (
+              <div className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-md flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                {selectedCount}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {/* New session button */}
             <button 
               onClick={async () => {
-              console.log('Starting new session');
+              console.log('=== Starting new session ===');
+              console.log('Current sessionId:', sessionId);
+              console.log('Current messages count:', messages.length);
+              
               // Only save session if it has user messages
               if (messages.length > 1) {
-                console.log('Saving old session', messages);
-                // Save current session to history
-                setPastSessions(prev => [...prev, [...messages]]);
+                console.log('Saving old session with messages:', messages.length);
+                // Save to database first to ensure it's persisted
+                try {
+                  await saveChatSessionWithMessages(
+                    sessionId,
+                    '987655', // studentId
+                    courseId,
+                    deadlineId,
+                    isStudyMode,
+                    messages
+                  );
+                  console.log('Successfully saved session to database');
+                } catch (err) {
+                  console.error('Error saving session to database:', err);
+                }
               }
               
               // Exit study mode if active
@@ -188,46 +386,33 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                 setIsStudyMode(false);
               }
               
-              setIsLoading(true);
+              // Show new session animation
+              setShowNewSessionAnimation(true);
               
-              try {
-                // Get a personalized greeting from the API
-                const response = await fetch('/api/chat', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    messages: [{
-                      role: 'user',
-                      content: `Please provide a greeting as an AI Study Coach for ${courseInfo.code} course. Introduce yourself and ask how you can help.`
-                    }],
-                    studentId: '987654', // Example student ID
-                    courseId: courseId
-                  }),
-                });
+              setTimeout(() => {
+                // Create a new session ID
+                const newSessionId = generateUUID();
+                console.log('Generated new session ID:', newSessionId);
                 
-                if (response.ok) {
-                  const data = await response.json();
-                  const newInitialMessage = {
-                    id: Date.now().toString(),
-                    role: 'assistant' as const,
-                    content: data.response,
-                    timestamp: new Date()
-                  };
-                  setMessages([newInitialMessage]);
-                } else {
-                  // Fallback to default greeting if API call fails
-                  const newInitialMessage = createInitialMessage();
-                  setMessages([newInitialMessage]);
-                }
-              } catch (error) {
-                console.error('Error getting initial greeting:', error);
+                // Create default initial message without API call
                 const newInitialMessage = createInitialMessage();
-                setMessages([newInitialMessage]);
-              } finally {
-                setIsLoading(false);
-              }
+                console.log('Created initial message:', newInitialMessage);
+                
+                // Create a new session with this initial message
+                createNewSession(newSessionId, newInitialMessage);
+                
+                // Update local session ID if we're not using context session
+                if (!activeSessionId) {
+                  setLocalSessionId(newSessionId);
+                }
+                
+                // Force refresh the session history immediately
+                window.dispatchEvent(new CustomEvent('refresh-sessions'));
+                
+                // Hide animation
+                setShowNewSessionAnimation(false);
+                console.log('=== New session created ===');
+              }, 800);
             }}
               className={cn(
                 "text-white rounded-md hover:bg-red-900 transition-colors flex items-center gap-1 bg-asu-maroon",
@@ -285,6 +470,18 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
             </div>
           )}
           
+          {/* New session animation */}
+          {showNewSessionAnimation && (
+            <div className="flex justify-center">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 animate-pulse">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <Plus className="w-4 h-4 animate-spin" />
+                  <span className="text-sm font-medium">Creating new session...</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Mode change notification */}
           {showModeNotification && (
             <div className="flex justify-center">
@@ -334,13 +531,62 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                     <button
                       onClick={() => {
                         setShowModeToggle(false);
+                        
+                        // Determine if we're entering or exiting study mode
+                        const enteringStudyMode = !isStudyMode;
+                        
                         // Show notification and set type based on current mode state
                         setNotificationType(isStudyMode ? 'exit' : 'enter');
                         setShowModeNotification(true);
+                        
                         // Hide notification after 3 seconds
                         setTimeout(() => {
                           setShowModeNotification(false);
                         }, 3000);
+                        
+                        // Define source names to filter by in study mode
+                        // These would come from your actual content sources
+                        const studyModeSourceNames = [
+                          'Lecture Notes',
+                          'Textbook',
+                          'Practice Problems',
+                          'Study Guides'
+                        ];
+                        
+                        // Add system message noting the mode change
+                        const customMessage = enteringStudyMode ?
+                          'Now in Study Mode - I will guide you through structured learning with the attempt-first approach.' :
+                          'Exited Study Mode - returning to standard assistance.';
+                          
+                        // Call API with custom system prompt to indicate mode change
+                        fetch('/api/chat', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            messages: [{
+                              role: 'user',
+                              content: `[System: ${customMessage}]`
+                            }],
+                            studentId: '987655',
+                            courseId: courseId,
+                            studyMode: enteringStudyMode,
+                            // Use the same sessionId for continuity
+                            sessionId: sessionId,
+                            override_params: {
+                              system_prompt: enteringStudyMode ? 
+                                studyModeCustomPrompt : 
+                                'You are an AI study assistant. Acknowledge the mode change.', 
+                              temperature: enteringStudyMode ? 0.3 : 0.7,
+                              // Add source filtering when entering study mode
+                              source_names: enteringStudyMode ? studyModeSourceNames : [],
+                              // This response will never be seen by the user, but sets up the conversation context
+                              silentMode: true 
+                            }
+                          }),
+                        }).catch(err => console.error('Failed to update study mode:', err));
+                        
                         // Toggle study mode
                         setIsStudyMode(!isStudyMode);
                       }}
@@ -371,7 +617,7 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                           content: '[Document uploaded: lecture_notes.pdf]',
                           timestamp: new Date()
                         };
-                        setMessages(prev => [...prev, userMessage]);
+                        setMessages([...messages, userMessage]);
                       }}
                       className="w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 hover:bg-gray-100 text-gray-700"
                     >
@@ -392,7 +638,7 @@ export function ChatPanel({ courseId, deadlineId }: ChatPanelProps) {
                           content: '[Image uploaded: diagram.png]',
                           timestamp: new Date()
                         };
-                        setMessages(prev => [...prev, userMessage]);
+                        setMessages([...messages, userMessage]);
                       }}
                       className="w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center gap-2 hover:bg-gray-100 text-gray-700"
                     >

@@ -5,26 +5,30 @@ import { LeftPanel } from './LeftPanel'
 import { ChatPanel } from './ChatPanel'
 import { RightPanel } from './RightPanel'
 import { PanelLeft } from 'lucide-react'
+import { SelectedMaterialsProvider } from '@/context/SelectedMaterialsContext'
+import { ChatSessionProvider } from '@/context/ChatSessionContext'
 
 interface PreparationLayoutProps {
   courseId: string
   deadlineId: string
 }
 
-// Mock course data - in real app would come from API
-const getCourseInfo = (courseId: string) => {
-  const courses: Record<string, { name: string, code: string }> = {
-    '1': { name: 'Introduction to Computer Science', code: 'CSE 110' },
-    '2': { name: 'Calculus I', code: 'MAT 265' },
-    '3': { name: 'English Composition', code: 'ENG 101' },
-    '4': { name: 'General Chemistry', code: 'CHM 113' },
-    '5': { name: 'Introduction to Psychology', code: 'PSY 101' }
-  }
-  return courses[courseId] || { name: 'Course', code: 'COURSE' }
+interface CourseInfo {
+  name: string
+  code: string
+}
+
+interface DeadlineInfo {
+  title: string
+  type: string
+  dueDate: Date
 }
 
 export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutProps) {
-  const courseInfo = getCourseInfo(courseId)
+  const [courseInfo, setCourseInfo] = useState<CourseInfo>({ name: 'Loading...', code: '...' })
+  const [deadlineInfo, setDeadlineInfo] = useState<DeadlineInfo | null>(null)
+  const [courseColor, setCourseColor] = useState('#8C1D40')
+  const [loading, setLoading] = useState(true)
   const [leftPanelWidth, setLeftPanelWidth] = useState(25)
   const [rightPanelWidth, setRightPanelWidth] = useState(25)
   const [isResizingLeft, setIsResizingLeft] = useState(false)
@@ -32,19 +36,61 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
   // Left panel is always expanded
   const isLeftPanelMinimized = false
   
-  // Find background color for this course
-  const getCourseColor = () => {
-    const courses: Record<string, string> = {
-      '1': '#8C1D40',
-      '2': '#FF6900',
-      '3': '#00A3E0',
-      '4': '#78BE20',
-      '5': '#6B46C1'
+  // Fetch course and deadline info from API
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        // Fetch course info
+        const coursesResponse = await fetch('/api/courses')
+        const coursesData = await coursesResponse.json()
+        
+        if (coursesData.success) {
+          const course = coursesData.courses.find((c: any) => c.course_id === courseId)
+          if (course) {
+            setCourseInfo({
+              name: course.course_name,
+              code: course.course_code
+            })
+            
+            // Generate a color based on the course_id
+            const colors = [
+              '#8C1D40', // ASU Maroon
+              '#FF6900', // ASU Orange
+              '#00A3E0', // ASU Blue
+              '#78BE20', // ASU Green
+              '#6B46C1', // Purple
+              '#1E429F', // Navy
+              '#9B2FAE'  // Pink
+            ]
+            const colorIndex = parseInt(courseId) % colors.length
+            setCourseColor(colors[colorIndex])
+          }
+        }
+        
+        // Fetch deadline info
+        const deadlinesResponse = await fetch('/api/deadlines')
+        const deadlinesData = await deadlinesResponse.json()
+        
+        if (deadlinesData.success) {
+          const deadline = deadlinesData.deadlines.find((d: any) => d.id === deadlineId)
+          if (deadline) {
+            setDeadlineInfo({
+              title: deadline.title,
+              type: deadline.type,
+              dueDate: new Date(deadline.dueDate)
+            })
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching preparation data:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-    return courses[courseId] || '#8C1D40'
-  }
-  
-  const courseColor = getCourseColor()
+    
+    fetchData()
+  }, [courseId, deadlineId])
   
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -89,17 +135,19 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
   const middlePanelWidth = 100 - leftPanelWidth - rightPanelWidth
 
   return (
-    <div 
-      ref={containerRef}
-      className="flex h-full bg-gray-50 relative overflow-hidden"
-    >
-      <div className="w-full absolute top-0 h-1" style={{ backgroundColor: courseColor }}></div>
-        {/* Left Panel - Always expanded */}
+    <SelectedMaterialsProvider>
+      <ChatSessionProvider>
         <div 
-          style={{ width: `${leftPanelWidth}%` }}
-          className="bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 relative"
+          ref={containerRef}
+          className="flex h-full bg-gray-50 relative overflow-hidden"
         >
-          <LeftPanel courseId={courseId} />
+        <div className="w-full absolute top-0 h-1" style={{ backgroundColor: courseColor }}></div>
+          {/* Left Panel - Always expanded */}
+          <div 
+            style={{ width: `${leftPanelWidth}%` }}
+            className="bg-white border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 relative"
+          >
+            <LeftPanel courseId={courseId} />
         </div>
 
         {/* Left Resize Handle */}
@@ -115,7 +163,12 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
           style={{ width: `${middlePanelWidth}%` }}
           className="bg-white flex flex-col overflow-hidden"
         >
-          <ChatPanel courseId={courseId} deadlineId={deadlineId} />
+          <ChatPanel 
+            courseId={courseId} 
+            deadlineId={deadlineId} 
+            courseName={courseInfo.name} 
+            deadlineTitle={deadlineInfo?.title || 'Assignment'} 
+          />
         </div>
 
         {/* Right Resize Handle */}
@@ -133,6 +186,8 @@ export function PreparationLayout({ courseId, deadlineId }: PreparationLayoutPro
         >
           <RightPanel courseId={courseId} />
         </div>
-    </div>
+      </div>
+      </ChatSessionProvider>
+    </SelectedMaterialsProvider>
   )
 }

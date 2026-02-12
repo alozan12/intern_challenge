@@ -36,6 +36,12 @@ interface ChatRequest {
   preparationPageId?: string;
   stream?: boolean;
   studyMode?: boolean;
+  sessionId?: string; // Added sessionId parameter
+  override_params?: {
+    system_prompt?: string;
+    temperature?: number;
+    [key: string]: any;
+  };
 }
 
 interface ChatResponse {
@@ -48,7 +54,7 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, studentId, courseId, preparationPageId, stream = false, studyMode = false }: ChatRequest = await req.json();
+    const { messages, studentId, courseId, preparationPageId, stream = false, studyMode = false, sessionId, override_params = {} }: ChatRequest = await req.json();
     
     // Make sure we have messages
     if (!messages || messages.length === 0) {
@@ -108,8 +114,9 @@ export async function POST(req: NextRequest) {
     };
     
     // Construct detailed system prompt using imported prompt templates
-    // Choose base prompt based on mode
-    let systemPrompt = studyMode ? studyModeSystemPrompt : studyCoachSystemPrompt;
+    // If override_params.system_prompt is provided, use it
+    // Otherwise, choose base prompt based on mode
+    let systemPrompt = override_params.system_prompt || (studyMode ? studyModeSystemPrompt : studyCoachSystemPrompt);
     
     if (courseId && courseName) {
       // In study mode, we handle course info differently
@@ -158,13 +165,20 @@ export async function POST(req: NextRequest) {
       modelProvider: 'aws',
       modelName: 'claude4_5_sonnet',
       systemPrompt,
-      sessionId: `student_${studentId || 'unknown'}_course_${courseId || 'unknown'}_${Date.now()}`,
+      sessionId: sessionId || `student_${studentId || 'unknown'}_course_${courseId || 'unknown'}_${Date.now()}`,
       // Disable search since we don't have a project token
       enableSearch: false,
-      temperature: 0.5, // Balance between creativity and accuracy
+      temperature: override_params.temperature !== undefined ? override_params.temperature : 0.5, // Use override or default
       context,
       stream
     };
+    
+    // Add any additional override params
+    for (const key in override_params) {
+      if (key !== 'system_prompt' && key !== 'temperature') {
+        options[key] = override_params[key];
+      }
+    }
     
     // For streaming responses
     if (stream) {
