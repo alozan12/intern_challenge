@@ -71,8 +71,7 @@ export function MiniCalendar({ deadlines = [], useLiveData = true }: MiniCalenda
 
   return (
     <div className="rounded-lg p-1">
-      <div className="flex items-center justify-between mb-1">
-        <h3 className="text-sm font-semibold text-gray-700">Calendar</h3>
+      <div className="flex items-center justify-end mb-1">
         <div className="flex items-center gap-2">
           <button
             onClick={handlePreviousMonth}

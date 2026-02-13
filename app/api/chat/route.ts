@@ -9,7 +9,8 @@ import {
   courseSpecificPrompt,
   learningGapsPrompt,
   preparationPagePrompt,
-  attemptFirstGuidancePrompt
+  attemptFirstGuidancePrompt,
+  documentSpecificPrompt
 } from '@/prompts/chat/study-coach';
 
 // Import study mode prompts
@@ -37,6 +38,7 @@ interface ChatRequest {
   stream?: boolean;
   studyMode?: boolean;
   sessionId?: string; // Added sessionId parameter
+  selectedDocuments?: string[]; // Selected document filenames
   override_params?: {
     system_prompt?: string;
     temperature?: number;
@@ -54,7 +56,7 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, studentId, courseId, preparationPageId, stream = false, studyMode = false, sessionId, override_params = {} }: ChatRequest = await req.json();
+    const { messages, studentId, courseId, preparationPageId, stream = false, studyMode = false, sessionId, selectedDocuments, override_params = {} }: ChatRequest = await req.json();
     
     // Make sure we have messages
     if (!messages || messages.length === 0) {
@@ -118,6 +120,16 @@ export async function POST(req: NextRequest) {
     // Otherwise, choose base prompt based on mode
     let systemPrompt = override_params.system_prompt || (studyMode ? studyModeSystemPrompt : studyCoachSystemPrompt);
     
+    // If specific documents are selected, add document-specific prompt
+    if (selectedDocuments && selectedDocuments.length > 0) {
+      // Use the first selected document for the prompt
+      const primaryDocument = selectedDocuments[0];
+      const documentType = primaryDocument.endsWith('.pdf') ? 'PDF document' : 
+                          primaryDocument.endsWith('.pptx') ? 'PowerPoint presentation' : 
+                          primaryDocument.endsWith('.docx') ? 'Word document' : 'document';
+      systemPrompt += documentSpecificPrompt(primaryDocument, documentType);
+    }
+    
     if (courseId && courseName) {
       // In study mode, we handle course info differently
       if (!studyMode) {
@@ -161,17 +173,28 @@ export async function POST(req: NextRequest) {
     }
     
     // Set up options for CreateAI API
-    const options = {
+    const options: any = {
       modelProvider: 'aws',
       modelName: 'claude4_5_sonnet',
       systemPrompt,
       sessionId: sessionId || `student_${studentId || 'unknown'}_course_${courseId || 'unknown'}_${Date.now()}`,
-      // Disable search since we don't have a project token
-      enableSearch: false,
+      // Enable search if documents are selected
+      enableSearch: selectedDocuments && selectedDocuments.length > 0,
       temperature: override_params.temperature !== undefined ? override_params.temperature : 0.5, // Use override or default
       context,
       stream
     };
+    
+    // Add search parameters if documents are selected
+    if (selectedDocuments && selectedDocuments.length > 0) {
+      console.log('Debug - Selected documents in chat route:', selectedDocuments);
+      options.searchParams = {
+        collection: process.env.CREATE_AI_PROJECT_ID || 'your_project_id_here',
+        sourceNames: selectedDocuments,
+        topK: 5,
+        retrievalType: 'chunk'
+      };
+    }
     
     // Add any additional override params
     for (const key in override_params) {
@@ -192,7 +215,8 @@ export async function POST(req: NextRequest) {
           modelName: options.modelName,
           sessionId: options.sessionId,
           temperature: options.temperature,
-          enableSearch: options.enableSearch
+          enableSearch: options.enableSearch,
+          searchParams: options.searchParams
         }
       });
       
@@ -225,6 +249,12 @@ export async function POST(req: NextRequest) {
       const userContent = isStudyModeGreeting ? 
         getStudyModeGreetingPrompt(courseId ? courseName || courseId : 'your course') : 
         lastMessage.content;
+      
+      // Log the options being sent to CreateAI
+      console.log('=== Chat API to CreateAI ===');
+      console.log('User content:', userContent);
+      console.log('Options being sent:', JSON.stringify(options, null, 2));
+      console.log('============================');
       
       // Use direct query API which works with our token
       const queryResponse = await queryCreateAI<{ response: string }>(userContent, options);

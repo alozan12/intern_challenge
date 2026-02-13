@@ -7,8 +7,9 @@ import { PreviousSessionCard } from '@/components/landing/PreviousSessionCard'
 import { AIInsights } from '@/components/landing/AIInsights'
 import { MiniCalendar } from '@/components/landing/MiniCalendar'
 import { Course, Analytics } from '@/types'
-import { SunMedium } from 'lucide-react'
+import { ArrowRight, SunMedium } from 'lucide-react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 
 // Mock data - in a real app, this would come from an API
 const mockCourses: Course[] = [
@@ -231,20 +232,35 @@ export default function LandingPage() {
           <AIInsights />
         </motion.section>
 
-        {/* Right Section: Deadlines (33% width) */}
+        {/* Right Section: Deadlines and Calendar (33% width) */}
         <motion.aside 
           variants={itemVariants}
-          className="w-full lg:w-1/3"
+          className="w-full lg:w-1/3 space-y-6"
         >
+          {/* Upcoming Deadlines Box */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Upcoming Deadlines</h2>
-            </div>
-            <div className="flex flex-col">
-              <DeadlinesSection useLiveData={true} showTitle={false} />
-              <div className="p-4 pt-0 border-t-2 border-gray-300">
-                <MiniCalendar useLiveData={true} />
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-gray-900">Upcoming Deadlines</h2>
+                <Link 
+                  href="/coursework" 
+                  className="text-sm text-[#8C1D40] hover:underline flex items-center gap-1"
+                >
+                  <span>View All Coursework</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
+            </div>
+            <DeadlinesSection useLiveData={true} showTitle={false} />
+          </div>
+          
+          {/* Calendar Box (Separate) */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Calendar</h2>
+            </div>
+            <div className="p-4">
+              <MiniCalendar useLiveData={true} />
             </div>
           </div>
         </motion.aside>

@@ -206,14 +206,25 @@ export function ChatPanel({ courseId, deadlineId, courseName, deadlineTitle }: C
       if (material_ids.length > 0) {
         console.log('Using CreateAI API with selected materials')
         
-        // Filter by source name if in study mode
-        const sourceNames = isStudyMode ? 
-          // Example filter - in a real app this would come from materials metadata
-          ['Lecture Notes', 'Textbook', 'Assignment Instructions'] : 
-          []
+        // Get actual document filenames from selected materials for source filtering
+        const sourceNames = selectedMaterials
+          .filter(item => item.isSelected && item.filename)
+          .map(item => item.filename!)
+        
+        console.log('Selected document filenames for filtering:', sourceNames);
           
+        // Prepend document names to query for proper filtering
+        let enhancedQuery = userMessage.content;
+        if (sourceNames.length > 0) {
+          if (sourceNames.length === 1) {
+            enhancedQuery = `Using ONLY the document '${sourceNames[0]}', ${userMessage.content}`;
+          } else {
+            enhancedQuery = `Using ONLY these documents: ${sourceNames.join(', ')}, ${userMessage.content}`;
+          }
+        }
+        
         const createAIResponse = await sendQueryToCreateAI(
-          userMessage.content,
+          enhancedQuery,
           material_ids,
           course_ids,
           sessionId,

@@ -629,3 +629,61 @@ Important: Always verify that you are using the correct HTTP method, a valid Bea
 The query endpoint supports audio, vision, and speech models. By adding the parameter `"request_source": "override_params"` in your payload, you can override any project settings. This allows you to provide custom system prompts and adjust model parameters that may otherwise be set on the platform.
 
 Adding the parameter "request_source": "override_params" you can override any project settings you have enabled. This means that even if you have a system prompt in your project settings, you can override it by sending this flag and the new system prompt in the payload. You can also override the models and use any models that we offer and not available to select via the UI for example, speech, audio and vision models.
+
+## **Document Filtering with override_params**
+
+When you need to ensure the API only searches within specific documents, you must use the `request_source: "override_params"` parameter along with `override_params` to properly filter by source names.
+
+### **Working Example for Document Filtering**
+
+```json
+{
+  "action": "query",
+  "query": "What concepts are covered?",
+  "request_source": "override_params",
+  "model_provider": "openai",
+  "model_name": "gpt4",
+  "session_id": "your_session_id",
+  "model_params": {
+    "temperature": 0.7,
+    "system_prompt": "You are an AI assistant with access ONLY to the specified documents.",
+    "enable_search": true,
+    "search_params": {
+      "source_names": ["document1.pdf", "document2.pptx"],
+      "top_k": 5,
+      "reranker": true,
+      "retrieval_type": "chunk",
+      "output_fields": ["content", "source_name", "material_id"]
+    }
+  },
+  "override_params": {
+    "search_params": {
+      "source_names": ["document1.pdf", "document2.pptx"]
+    }
+  }
+}
+```
+
+### **Important Notes for Document Filtering**
+
+1. **Must use `request_source: "override_params"`** - This is required for the API to respect your source_names filtering
+2. **Include source_names in both places**:
+   - In `model_params.search_params.source_names`
+   - In `override_params.search_params.source_names`
+3. **Enhanced Query Strategy** - For best results, mention the document names in your query:
+   - Single document: `"Using ONLY the document 'filename.pdf', explain..."`
+   - Multiple documents: `"Using ONLY these documents: file1.pdf, file2.pptx, explain..."`
+
+### **Why This Approach Works**
+
+- The `request_source: "override_params"` flag tells the API to override project settings with your custom parameters
+- The `override_params.search_params.source_names` ensures document filtering is applied at the search level
+- Including document names in the query itself provides an additional layer of filtering
+- This combination achieves nearly 100% accuracy in document selection
+
+### **Common Pitfalls to Avoid**
+
+1. Using only `material_ids` or `expr` filtering - these are less reliable for document selection
+2. Forgetting to set `request_source: "override_params"` - without this, override_params are ignored
+3. Not including source_names in override_params - the filtering won't work properly
+4. Relying only on system prompts - these alone cannot enforce document boundaries

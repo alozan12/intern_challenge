@@ -61,6 +61,7 @@ export interface KnowledgeBaseItem {
   id: string
   courseId: string
   title: string
+  filename?: string
   type: 'lecture' | 'assignment' | 'quiz' | 'reading' | 'module'
   content: string
   lastAccessed?: Date
@@ -139,6 +140,8 @@ export interface AIInsight {
   courseName: string
   courseCode: string
   topic: string
+  priority?: 'high' | 'medium' | 'low'
+  createdAt?: string
   deadline?: {
     id: string
     title: string

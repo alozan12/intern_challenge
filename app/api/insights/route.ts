@@ -11,7 +11,8 @@ import {
   gapsInsightsPrompt,
   gapsUserPrompt,
   recommendationInsightsPrompt,
-  recommendationUserPrompt
+  recommendationUserPrompt,
+  getRecommendationUserPrompt
 } from '@/prompts/insights';
 // TextEncoder for the Edge runtime
 const encoder = new TextEncoder();
@@ -26,6 +27,7 @@ interface InsightsRequest {
   courseId?: string;
   insightType?: 'performance' | 'recommendation' | 'gaps';
   stream?: boolean;
+  count?: number; // Number of insights to generate
 }
 
 interface InsightsResponse {
@@ -74,7 +76,10 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    const { studentId, courseId, insightType = 'recommendation', stream = false }: InsightsRequest = await req.json();
+    const { studentId, courseId, insightType = 'recommendation', stream = false, count }: InsightsRequest = await req.json();
+    
+    // Validate and limit count to maximum of 5
+    const validatedCount = count ? Math.min(5, Math.max(1, count)) : undefined;
     
     if (!studentId) {
       return NextResponse.json(
@@ -95,16 +100,21 @@ export async function POST(req: NextRequest) {
     const studentProfile = studentProfileData.student;
     const enrolledCourses = studentProfileData.courses;
     
-    // Add upcoming deadlines data
+    // Add upcoming deadlines data with course information
     const upcomingDeadlines = courseItemsData.course_items
       .filter(item => item.status === 'upcoming' && item.due_date)
-      .map(item => ({
-        id: item.item_id,
-        title: item.title,
-        type: item.item_type as 'assignment' | 'quiz' | 'exam' | 'discussion',
-        dueDate: new Date(item.due_date || ''),
-        courseId: item.course_id
-      }));
+      .map(item => {
+        const course = enrolledCourses.find(c => c.course_id === item.course_id)
+        return {
+          id: item.item_id,
+          title: item.title,
+          type: item.item_type as 'assignment' | 'quiz' | 'exam' | 'discussion',
+          dueDate: new Date(item.due_date || ''),
+          courseId: item.course_id,
+          courseName: course?.course_name || 'Unknown Course',
+          courseCode: course?.course_code || 'N/A'
+        }
+      });
     
     // Set up system prompt and query based on insight type using imported templates
     let systemPrompt = '';
@@ -124,7 +134,7 @@ export async function POST(req: NextRequest) {
       case 'recommendation':
       default:
         systemPrompt = recommendationInsightsPrompt;
-        userPrompt = recommendationUserPrompt;
+        userPrompt = getRecommendationUserPrompt(validatedCount);
         break;
     }
     

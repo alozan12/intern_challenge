@@ -4,86 +4,17 @@ import { useState, useEffect } from 'react'
 import { Play, Clock, BookOpen, Brain, AlertTriangle, TrendingUp, Calendar, Sparkles, Target, ArrowRight, RefreshCw, Loader2 } from 'lucide-react'
 import { AIInsight } from '@/types'
 import Link from 'next/link'
+import { InsightsService } from '@/lib/insights-service'
 
 export function AIInsights() {
-  // Default mock insights for fallback
-  const mockInsights: AIInsight[] = [
-    {
-      id: '1',
-      title: 'Review Binary Search Trees',
-      description: 'Strengthen your understanding of Binary Search Trees before the upcoming project and exam.',
-      duration: 20,
-      type: 'review',
-      courseId: '1',
-      courseName: 'Introduction to Computer Science',
-      courseCode: 'CSE 110',
-      topic: 'Binary Search Trees',
-      deadline: {
-        id: '1',
-        title: 'Project 3: Binary Search Trees',
-        dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-        type: 'assignment'
-      }
-    },
-    {
-      id: '2',
-      title: 'Practice Integration Techniques',
-      description: 'Your recent quiz showed difficulty with Integration by Parts. Let\'s strengthen this skill before your Chapter 5 Quiz tomorrow.',
-      duration: 15,
-      type: 'practice',
-      courseId: '2',
-      courseName: 'Calculus I',
-      courseCode: 'MAT 265',
-      topic: 'Integration by Parts',
-      deadline: {
-        id: '3',
-        title: 'Chapter 5 Quiz',
-        dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-        type: 'quiz'
-      }
-    },
-    {
-      id: '3',
-      title: 'Master APA Citations',
-      description: 'You did well on the APA quiz, but let\'s reinforce in-text citations before your essay draft.',
-      duration: 10,
-      type: 'strengthen',
-      courseId: '3',
-      courseName: 'English Composition',
-      courseCode: 'ENG 101',
-      topic: 'In-text Citations',
-      deadline: {
-        id: '4',
-        title: 'Essay Draft',
-        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        type: 'assignment'
-      }
-    },
-    {
-      id: '4',
-      title: 'Deep Dive: Molecular Orbital Theory',
-      description: 'Based on your quiz performance, focus on molecular orbital theory and hybridization concepts.',
-      duration: 30,
-      type: 'review',
-      courseId: '4',
-      courseName: 'General Chemistry',
-      courseCode: 'CHM 113',
-      topic: 'Molecular Orbital Theory',
-      deadline: {
-        id: '6',
-        title: 'Lab Report 4',
-        dueDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
-        type: 'assignment'
-      }
-    }
-  ];
-  
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Function to fetch real insights from the API
-  const fetchInsights = async () => {
+  const insightsService = InsightsService.getInstance();
+  
+  // Function to fetch insights using the centralized service
+  const fetchInsights = async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     
@@ -91,93 +22,13 @@ export function AIInsights() {
       // In a real app, you would get the student ID from auth context
       const studentId = '987654'; // Default student ID from our mock data
       
-      const response = await fetch('/api/insights', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          studentId,
-          insightType: 'recommendation'
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Map the recommendations to our AIInsight format
-      if (data.type === 'recommendation' && Array.isArray(data.data?.recommendations)) {
-        console.log('Received recommendations:', data.data.recommendations);
-        
-        const mappedInsights: AIInsight[] = data.data.recommendations.map((rec: any, index: number) => {
-          // Get course info from the first topic
-          let courseId = 'unknown';
-          let courseName = 'General Course';
-          let courseCode = 'CSE 101';
-          
-          // Try to determine the course from the topic
-          if (rec.topics && rec.topics.length > 0) {
-            const topic = rec.topics[0].toLowerCase();
-            
-            // Data structures related topics likely belong to CSE310
-            if (topic.includes('tree') || topic.includes('bst') || topic.includes('array') || 
-                topic.includes('linked list') || topic.includes('graph')) {
-              courseId = '112233';
-              courseName = 'Data Structures & Algorithms';
-              courseCode = 'CSE310';
-            }
-            // Programming languages topics likely belong to CSE340
-            else if (topic.includes('programming') || topic.includes('functional') || 
-                     topic.includes('procedural') || topic.includes('oop')) {
-              courseId = '112234';
-              courseName = 'Principles of Programming Languages';
-              courseCode = 'CSE340';
-            }
-            // Discrete math topics
-            else if (topic.includes('math') || topic.includes('discrete')) {
-              courseId = '112235';
-              courseName = 'Discrete Mathematical Structures';
-              courseCode = 'MAT243';
-            }
-          }
-          
-          // Extract deadline if present in the recommendation
-          let deadline = undefined;
-          if (rec.deadline) {
-            deadline = {
-              id: rec.deadline.id || `deadline_${index}`,
-              title: rec.deadline.title,
-              dueDate: new Date(rec.deadline.dueDate),
-              type: rec.deadline.type || 'assignment'
-            };
-          }
-          
-          return {
-            id: `insight_${index}`,
-            title: rec.title,
-            description: rec.description,
-            duration: rec.duration,
-            type: rec.type === 'quick' ? 'review' : 'practice',
-            courseId: courseId,
-            courseName: courseName,
-            courseCode: courseCode,
-            topic: rec.topics[0] || 'General',
-            deadline: deadline
-          };
-        });
-        
-        setInsights(mappedInsights);
-      } else {
-        // Fallback to mock insights if format doesn't match
-        setInsights(mockInsights);
-      }
+      // Get preview insights (limited to 3 for landing page)
+      const previewInsights = await insightsService.getPreviewInsights(studentId, 3);
+      setInsights(previewInsights);
     } catch (err) {
       console.error('Error fetching insights:', err);
       setError('Failed to load insights');
-      setInsights(mockInsights); // Use mock data as fallback
+      setInsights([]); // Empty array on error
     } finally {
       setLoading(false);
     }
@@ -186,11 +37,21 @@ export function AIInsights() {
   // Fetch insights on component mount
   useEffect(() => {
     fetchInsights();
+    
+    // Subscribe to insights updates
+    const unsubscribe = insightsService.subscribeToUpdates((updatedInsights) => {
+      // Update with preview of new insights
+      setInsights(updatedInsights.slice(0, 3));
+    });
+    
+    return () => {
+      unsubscribe();
+    };
   }, []);
   
   // Function to regenerate insights
   const regenerateInsights = () => {
-    fetchInsights();
+    fetchInsights(true); // Force refresh
   };
 
   // Function to get icon based on insight type
@@ -242,7 +103,7 @@ export function AIInsights() {
             )}
           </button>
           <Link 
-            href="/insights"
+            href="/library?tab=insights"
             className="text-sm text-[#8C1D40] hover:underline flex items-center gap-1"
           >
             <span>View All Insights</span>

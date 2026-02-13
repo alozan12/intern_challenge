@@ -68,6 +68,7 @@ const mapMaterialsToKnowledgeBase = (materials: CourseMaterial[]): KnowledgeBase
       id: material.material_id,
       courseId: material.course_id,
       title: material.title,
+      filename: material.filename || undefined,
       type: itemType,
       content: material.text_instruction || 'No content available',
       isSelected: false
@@ -174,6 +175,7 @@ export function KnowledgeBaseTab({ courseId, customSessionCourseId }: KnowledgeB
     if (toggledItem) {
       console.log(`\n=== Material Selection Changed ===`);
       console.log(`Material: ${toggledItem.title}`);
+      console.log(`Filename: ${toggledItem.filename || 'No filename'}`);
       console.log(`Material ID: ${toggledItem.id}`);
       console.log(`Course ID: ${toggledItem.courseId}`);
       console.log(`Selected: ${toggledItem.isSelected}`);
@@ -361,9 +363,16 @@ export function KnowledgeBaseTab({ courseId, customSessionCourseId }: KnowledgeB
                 <h4 className="font-medium text-sm text-gray-900">
                   {item.title}
                 </h4>
-                <p className="text-xs text-gray-500 mt-1 capitalize">
-                  {item.type}
-                </p>
+                <div className="flex flex-col gap-0.5 mt-1">
+                  <p className="text-xs text-gray-500 capitalize">
+                    {item.type}
+                  </p>
+                  {item.filename && (
+                    <p className="text-xs text-gray-400 truncate">
+                      {item.filename}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className={cn(
                 "w-5 h-5 rounded border-2 flex items-center justify-center transition-all",

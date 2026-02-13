@@ -47,6 +47,7 @@ export type CreateAIResponse<T = any> = {
   error?: string;
 };
 
+
 /**
  * Makes an authenticated API call to the CreateAI service via the project endpoint
  */
@@ -228,30 +229,81 @@ export async function queryCreateAI<T = any>(query: string, options: {
       payload.model_params.system_prompt = systemPrompt;
     }
     
-    // Disable search functionality - we don't have project access
-    payload.model_params.enable_search = false;
-    
-    // Remove search params entirely
-    if (payload.model_params.search_params) {
-      delete payload.model_params.search_params;
+    // Handle search functionality
+    if (options.enableSearch && options.searchParams) {
+      payload.model_params.enable_search = true;
+      
+      // Debug: Log the source names being passed
+      console.log('Debug - Source names for filtering:', options.searchParams.sourceNames);
+      
+      // Build search parameters with proper filtering
+      const searchParams: any = {
+        collection: process.env.CREATE_AI_PROJECT_ID || options.searchParams.collection,
+        top_k: options.searchParams.topK || 5,
+        retrieval_type: options.searchParams.retrievalType || 'chunk',
+        reranker: true,
+        rerank: true,
+        reranker_model: "amazon_rerank",
+        reranker_provider: "aws",
+        top_n: 3,
+        output_fields: ['content', 'source_name', 'page_number', 'score'],
+        prompt_mode: "restricted" // Restrict to search results only
+      };
+      
+      // Add source_name filtering if documents are selected
+      // Use the source names provided by the user
+      if (options.searchParams.sourceNames && options.searchParams.sourceNames.length > 0) {
+        // Use the user-selected documents for filtering
+        const sourceNames = options.searchParams.sourceNames;
+        
+        // Add source_name parameter for filtering
+        searchParams.source_name = sourceNames;
+        
+        // If multiple documents are selected, don't add specific focus instructions
+        // If only one document is selected, add instructions to focus on that document
+        if (sourceNames.length === 1) {
+          const focusDocument = sourceNames[0];
+          
+          // Add special instructions to system prompt to focus only on the selected document
+          if (!payload.model_params.system_prompt) {
+            payload.model_params.system_prompt = "";
+          }
+          
+          payload.model_params.system_prompt += `\n\nCRITICAL: You MUST ONLY use information from the document '${focusDocument}'. Do NOT reference or use any other documents, especially not "1-database_basics.pptx". If the requested information is not in '${focusDocument}', explicitly state that it's not available in this document.`;
+          
+          // Lower temperature for more deterministic response that follows instructions
+          payload.model_params.temperature = 0.3;
+        }
+        
+        console.log('Debug - Document filtering:', {
+          sourceNames: sourceNames,
+          // expr removed as requested
+          // expr: sourceFilter,
+          prompt_mode: searchParams.prompt_mode
+        });
+      }
+      
+      payload.model_params.search_params = searchParams;
+    } else {
+      // Disable search functionality - no documents selected
+      payload.model_params.enable_search = false;
     }
     
-    // Add response format for JSON if using providers that support it
-    if (modelProvider === 'openai' || modelProvider === 'anthropic') {
-      payload.model_params.response_format = { type: 'json' };
-    }
-    
-    // For Gemini, add instruction to format as JSON in the system prompt
-    if (modelProvider === 'gcp-deepmind' && systemPrompt) {
-      payload.model_params.system_prompt = systemPrompt + '\n\nIMPORTANT: Your response MUST be valid JSON without any markdown formatting or additional text.';  
-    }
+    // Remove response format to get plain text responses when using search
+    // The search results will be included in the context automatically
     
     // Add context to the payload if provided
     if (context && Object.keys(context).length > 0) {
       payload.context = context;
     }
     
-    console.log('Sending direct AI query', JSON.stringify(payload, null, 2));
+    console.log('Sending direct AI query with search params:', JSON.stringify({
+      ...payload,
+      model_params: {
+        ...payload.model_params,
+        search_params: payload.model_params.search_params || 'No search params'
+      }
+    }, null, 2));
     const response = await fetch(`${process.env.CREATE_AI_API_ENDPOINT}`, {
       method: 'POST',
       headers: {

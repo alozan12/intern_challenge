@@ -130,7 +130,7 @@ export function DeadlinesSection({ courses, showTitle = true, useLiveData = true
   
   // Animation variants
   const containerVariants = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: 1 }, // Changed from 0 to 1 to ensure initial visibility
     visible: {
       opacity: 1,
       transition: {
@@ -140,7 +140,7 @@ export function DeadlinesSection({ courses, showTitle = true, useLiveData = true
   };
 
   const itemVariants = {
-    hidden: { y: 10, opacity: 0 },
+    hidden: { opacity: 1 }, // Changed from {y: 10, opacity: 0} to ensure initial visibility
     visible: {
       y: 0,
       opacity: 1,
@@ -189,7 +189,6 @@ export function DeadlinesSection({ courses, showTitle = true, useLiveData = true
               key={deadline.id} 
               variants={itemVariants}
               className="p-3 hover:bg-gray-50 transition-all duration-200 ease-in-out"
-              whileHover={{ backgroundColor: "rgba(248, 248, 252, 1)" }}
             >
               <div className="flex items-start gap-3">
                 {/* Icon with background */}

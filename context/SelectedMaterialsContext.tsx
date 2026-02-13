@@ -10,6 +10,8 @@ interface SelectedMaterialsContextType {
     material_ids: string[]
     course_ids: string[]
   }
+  getSelectedMaterialTitles: () => string[]
+  getSelectedMaterialFilenames: () => string[]
 }
 
 const SelectedMaterialsContext = createContext<SelectedMaterialsContextType | undefined>(undefined)
@@ -35,12 +37,26 @@ export function SelectedMaterialsProvider({ children }: { children: React.ReactN
     return { material_ids, course_ids }
   }, [selectedMaterials])
 
+  const getSelectedMaterialTitles = useCallback(() => {
+    return selectedMaterials
+      .filter(item => item.isSelected)
+      .map(item => item.title)
+  }, [selectedMaterials])
+
+  const getSelectedMaterialFilenames = useCallback(() => {
+    return selectedMaterials
+      .filter(item => item.isSelected && item.filename)
+      .map(item => item.filename!)
+  }, [selectedMaterials])
+
   return (
     <SelectedMaterialsContext.Provider
       value={{
         selectedMaterials,
         updateSelectedMaterials,
-        getSelectedMaterialsMetadata
+        getSelectedMaterialsMetadata,
+        getSelectedMaterialTitles,
+        getSelectedMaterialFilenames
       }}
     >
       {children}
