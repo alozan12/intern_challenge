@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Home, BarChart3, Calendar, Settings, Library } from 'lucide-react'
+import { Home, BarChart3, Calendar, Settings, Backpack } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {
@@ -18,7 +17,7 @@ export function Sidebar({ isMinimized = false, onToggle }: SidebarProps) {
 
   const menuItems = [
     { icon: Home, label: 'Home', href: '/' },
-    { icon: Library, label: 'Backpack', href: '/library' },
+    { icon: Backpack, label: 'Backpack', href: '/library' },
     { icon: BarChart3, label: 'Analytics', href: '/analytics' },
     { icon: Calendar, label: 'Calendar', href: '/calendar' },
     { icon: Settings, label: 'Settings', href: '/settings' },

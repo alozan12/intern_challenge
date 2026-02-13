@@ -123,30 +123,72 @@ Return ONLY a JSON object with this exact structure:
   ]
 }`;
 
-// Genre-specific style mappings for ElevenLabs
+// Genre-specific style mappings for ElevenLabs - enhanced for full music production
 export const genreStyleMappings: Record<string, { positive: string[], negative: string[] }> = {
   rap: {
-    positive: ['hip-hop', 'rhythmic', 'spoken word', 'urban', 'beat-driven', 'energetic', 'rap vocals', 'lyrical flow'],
-    negative: ['classical', 'slow', 'ballad', 'orchestral', 'country', 'instrumental']
+    positive: [
+      'hip-hop', 'rhythmic', 'spoken word', 'urban', 'beat-driven', 'energetic', 'rap vocals', 'lyrical flow',
+      'backing beats', 'bass heavy', 'hip-hop production', 'rap with instrumental', 'hip-hop beats', 'vocal rap performance',
+      'complete hip-hop track', 'full rap production'
+    ],
+    negative: [
+      'classical', 'slow', 'ballad', 'orchestral', 'country', 'instrumental only', 'no beat', 'a cappella rap', 
+      'spoken word only', 'no bass', 'no drum beat'
+    ]
   },
   pop: {
-    positive: ['catchy', 'upbeat', 'melodic', 'contemporary', 'radio-friendly', 'energetic', 'vocal harmony', 'sing-along'],
-    negative: ['heavy metal', 'classical', 'experimental', 'avant-garde', 'instrumental']
+    positive: [
+      'catchy', 'upbeat', 'melodic', 'contemporary', 'radio-friendly', 'energetic', 'vocal harmony', 'sing-along',
+      'pop production', 'verse-chorus structure', 'pop instrumentation', 'modern pop arrangement', 
+      'complete pop song', 'full pop production', 'balanced vocals and music'
+    ],
+    negative: [
+      'heavy metal', 'classical', 'experimental', 'avant-garde', 'instrumental only', 'vocals only',
+      'no drums', 'no instruments', 'empty arrangement', 'sparse'
+    ]
   },
   rock: {
-    positive: ['guitar-driven', 'powerful', 'energetic', 'drums', 'electric', 'dynamic', 'rock vocals', 'vocal power'],
-    negative: ['classical', 'electronic', 'hip-hop', 'country', 'instrumental']
+    positive: [
+      'guitar-driven', 'powerful', 'energetic', 'drums', 'electric', 'dynamic', 'rock vocals', 'vocal power',
+      'guitar riffs', 'drum kit', 'rock band', 'electric guitar', 'bass guitar', 'full rock arrangement',
+      'complete rock track', 'rock instrumentation with vocals'
+    ],
+    negative: [
+      'classical', 'electronic', 'hip-hop', 'country', 'instrumental only', 'vocals only', 'no guitars',
+      'no drums', 'a cappella', 'unplugged'
+    ]
   },
   jazz: {
-    positive: ['smooth', 'sophisticated', 'improvisational', 'swing', 'brass', 'syncopated', 'jazz vocals', 'crooning'],
-    negative: ['heavy metal', 'electronic', 'techno', 'punk', 'instrumental']
+    positive: [
+      'smooth', 'sophisticated', 'improvisational', 'swing', 'brass', 'syncopated', 'jazz vocals', 'crooning',
+      'jazz ensemble', 'piano jazz', 'bass line', 'drum brushes', 'saxophone', 'trumpet', 'full jazz arrangement',
+      'jazz band with vocals', 'complete jazz track'
+    ],
+    negative: [
+      'heavy metal', 'electronic', 'techno', 'punk', 'instrumental only', 'vocals only', 'no instruments',
+      'no jazz rhythm', 'monotone', 'no swing'
+    ]
   },
   opera: {
-    positive: ['classical', 'dramatic', 'orchestral', 'theatrical', 'powerful vocals', 'grandiose', 'operatic singing', 'aria'],
-    negative: ['electronic', 'hip-hop', 'punk', 'techno', 'instrumental']
+    positive: [
+      'classical', 'dramatic', 'orchestral', 'theatrical', 'powerful vocals', 'grandiose', 'operatic singing', 'aria',
+      'orchestral accompaniment', 'string section', 'symphonic', 'classical instruments', 'opera ensemble',
+      'full orchestration with vocals', 'complete operatic piece'
+    ],
+    negative: [
+      'electronic', 'hip-hop', 'punk', 'techno', 'instrumental only', 'vocals only', 'no orchestration',
+      'no strings', 'minimal arrangement', 'sparse'
+    ]
   },
   retro: {
-    positive: ['80s', 'synth', 'nostalgic', 'vintage', 'electronic', 'new wave', 'retro vocals', 'synth-pop vocals'],
-    negative: ['modern trap', 'contemporary', 'dubstep', 'metal', 'instrumental']
+    positive: [
+      '80s', 'synth', 'nostalgic', 'vintage', 'electronic', 'new wave', 'retro vocals', 'synth-pop vocals',
+      'drum machine', 'analog synthesizers', 'retro production', 'vintage drums', 'retro effects',
+      'full 80s arrangement', 'complete retro track', 'synthwave with vocals'
+    ],
+    negative: [
+      'modern trap', 'contemporary', 'dubstep', 'metal', 'instrumental only', 'vocals only', 
+      'no synthesizers', 'no retro elements', 'sparse arrangement'
+    ]
   }
 };

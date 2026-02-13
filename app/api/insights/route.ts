@@ -160,7 +160,17 @@ export async function POST(req: NextRequest) {
       systemPrompt,
       temperature: 0.3,
       context: aiContext,
-      stream
+      stream,
+      // Enable knowledge base search to fetch real student data
+      enableSearch: true,
+      searchParams: {
+        collection: process.env.CREATE_AI_PROJECT_ID,
+        sourceNames: [], // Will search all documents
+        topK: 10,
+        retrievalType: 'chunk',
+        // Filter by student ID to get student-specific data from knowledge base
+        expr: studentId ? `student_id == '${studentId}'` : undefined
+      }
     };
     
     // For streaming responses
@@ -175,7 +185,8 @@ export async function POST(req: NextRequest) {
           modelName: options.modelName,
           sessionId: options.sessionId,
           temperature: options.temperature,
-          enableSearch: false
+          enableSearch: options.enableSearch,
+          searchParams: options.searchParams
         }
       });
       

@@ -140,7 +140,7 @@ async function generateMusicWithElevenLabs(lyrics: LyricsResponse, genre: string
     };
   });
 
-  // Create composition plan
+  // Create composition plan with enhanced parameters to ensure both vocals and music
   const compositionPlan = {
     positive_global_styles: [
       ...genreStyles.positive,
@@ -151,7 +151,15 @@ async function generateMusicWithElevenLabs(lyrics: LyricsResponse, genre: string
       'singing',
       'lyrical',
       'engaging',
-      'with vocals'
+      'with vocals',
+      'vocals with instrumental accompaniment',
+      'full production',
+      'balanced mix',
+      'vocals and music',
+      'complete song',
+      'full band',
+      'full instrumentation',
+      'vocals over instrumental'
     ],
     negative_global_styles: [
       ...genreStyles.negative,
@@ -162,7 +170,13 @@ async function generateMusicWithElevenLabs(lyrics: LyricsResponse, genre: string
       'backing track',
       'ambient',
       'no singing',
-      'voiceless'
+      'voiceless',
+      'acapella',
+      'vocals only',
+      'no background music',
+      'no instruments',
+      'sparse',
+      'minimal'
     ],
     sections: sections
   };
@@ -178,6 +192,8 @@ async function generateMusicWithElevenLabs(lyrics: LyricsResponse, genre: string
         composition_plan: compositionPlan,
         model_id: 'music_v1',
         force_instrumental: false,
+        vocals_only: false, // Explicitly set to false to ensure we get both vocals AND music
+        include_instrumental: true, // Ensure we get instrumental tracks with the vocals
         respect_sections_durations: false,
         output_format: 'mp3_44100_128'
       })
