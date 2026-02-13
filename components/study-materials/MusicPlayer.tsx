@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Play, Pause, SkipBack, SkipForward, Volume2, X, Maximize2, Minimize2, Music } from 'lucide-react'
+import { Play, Pause, SkipBack, SkipForward, Volume2, X, Maximize2, Minimize2, Music, FileText } from 'lucide-react'
 import { StudyMaterial } from '@/types'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
@@ -22,6 +22,16 @@ interface Track {
   duration: number
   genre: string
   src: string
+}
+
+interface LyricsSection {
+  name: string
+  lyrics: string[]
+}
+
+interface LyricsResponse {
+  title: string
+  sections: LyricsSection[]
 }
 
 interface MusicGenreInfo {
@@ -137,6 +147,8 @@ export function MusicPlayer({
   const [volume, setVolume] = useState(0.7)
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null)
   const [isGenerating, setIsGenerating] = useState(true)
+  const [lyrics, setLyrics] = useState<LyricsResponse | null>(null)
+  const [showLyrics, setShowLyrics] = useState(true)
   
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -211,33 +223,44 @@ export function MusicPlayer({
   // Auto-generate when component mounts
   useEffect(() => {
     const generateMusic = async () => {
-      // Mock generation process - in real app this would call Suno API
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Find a matching track from our mock tracks based on selected genre
-      // or use the first track as fallback
-      const matchedTrack = mockTracks.find(track => track.genre === selectedGenre) || mockTracks[0]
-      
-      // Important: Make sure we use a path relative to the public directory for Next.js static serving
-      const audioPath = '/mock_assets/pythagorean.mp3'
-      
-      // Log the audio path for debugging
-      console.log('Using audio path:', audioPath)
-      
-      // Create a track based on selected genre
-      const generatedTrack: Track = {
-        ...matchedTrack,
-        title: `${mockGenres.find(g => g.id === selectedGenre)?.name || 'Study'} Session`,
-        artist: 'AI Generated Music',
-        src: audioPath
+      // Check if we have actual tracks from the API
+      if (musicSet.content?.tracks && musicSet.content.tracks.length > 0) {
+        // Use the first track from the generated content
+        const track = musicSet.content.tracks[0] as Track
+        console.log('Using generated track:', track.title, 'from:', track.src)
+        setCurrentTrack(track)
+        
+        // Set lyrics if available
+        if (musicSet.content?.lyrics) {
+          console.log('Setting lyrics:', musicSet.content.lyrics)
+          setLyrics(musicSet.content.lyrics as LyricsResponse)
+        }
+        
+        setIsGenerating(false)
+      } else {
+        // Fallback to mock generation if no tracks
+        console.log('No tracks in musicSet, using mock data')
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        const matchedTrack = mockTracks.find(track => track.genre === selectedGenre) || mockTracks[0]
+        const audioPath = '/mock_assets/pythagorean.mp3'
+        
+        console.log('Using mock audio path:', audioPath)
+        
+        const generatedTrack: Track = {
+          ...matchedTrack,
+          title: `${mockGenres.find(g => g.id === selectedGenre)?.name || 'Study'} Session`,
+          artist: 'AI Generated Music',
+          src: audioPath
+        }
+        
+        setCurrentTrack(generatedTrack)
+        setIsGenerating(false)
       }
-      
-      setCurrentTrack(generatedTrack)
-      setIsGenerating(false)
     }
     
     generateMusic()
-  }, [selectedGenre])
+  }, [selectedGenre, musicSet])
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -407,59 +430,95 @@ export function MusicPlayer({
         </div>
       </div>
 
-      {/* Current Track Display */}
-      {currentTrack && (
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-8">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="w-32 h-32 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Music className="w-16 h-16 text-white" />
+      {/* Lyrics Section - Now at the top */}
+      {lyrics && (
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Lyrics</h3>
+              <button
+                onClick={() => setShowLyrics(!showLyrics)}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                {showLyrics ? 'Hide' : 'Show'} Lyrics
+              </button>
             </div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">{currentTrack.title}</h3>
-            <p className="text-gray-600 mb-4">{currentTrack.artist}</p>
+            
+            {showLyrics && (
+              <div className="space-y-6">
+                {lyrics.sections.map((section, index) => (
+                  <div key={index} className="space-y-2">
+                    <h4 className="font-medium text-purple-700 text-sm uppercase tracking-wide">
+                      {section.name}
+                    </h4>
+                    <div className="space-y-1">
+                      {section.lyrics.map((line, lineIndex) => (
+                        <p key={lineIndex} className="text-gray-700 leading-relaxed">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Player Controls - Now at the bottom */}
+      {currentTrack && (
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-8 mt-auto">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="w-24 h-24 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Music className="w-12 h-12 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-1">{currentTrack.title}</h3>
+            <p className="text-gray-600 mb-4 text-sm">{currentTrack.artist}</p>
             
             {/* Audio Controls */}
-            <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="flex items-center justify-center gap-4 mb-4">
               <button
                 onClick={handleSkipBackward}
-                className="p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-all"
+                className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all"
                 title="Skip back 10 seconds"
               >
-                <SkipBack className="w-6 h-6 text-gray-700" />
+                <SkipBack className="w-5 h-5 text-gray-700" />
               </button>
               
               <button
                 onClick={handlePlayPause}
-                className="p-4 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-700 transition-all"
+                className="p-3 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-700 transition-all"
               >
-                {isPlaying ? <Pause className="w-8 h-8" /> : <Play className="w-8 h-8" />}
+                {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
               </button>
               
               <button
                 onClick={handleSkipForward}
-                className="p-3 bg-white rounded-full shadow-md hover:shadow-lg transition-all"
+                className="p-2 bg-white rounded-full shadow-md hover:shadow-lg transition-all"
                 title="Skip forward 10 seconds"
               >
-                <SkipForward className="w-6 h-6 text-gray-700" />
+                <SkipForward className="w-5 h-5 text-gray-700" />
               </button>
             </div>
 
             {/* Progress Bar */}
             <div className="max-w-md mx-auto">
               <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
-                <span>{formatTime(currentTime)}</span>
+                <span className="text-xs">{formatTime(currentTime)}</span>
                 <input
                   type="range"
                   min="0"
                   max={duration || 0}
                   value={currentTime}
                   onChange={handleSeek}
-                  className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 />
-                <span>{formatTime(duration)}</span>
+                <span className="text-xs">{formatTime(duration)}</span>
               </div>
 
               {/* Volume Control */}
-              <div className="flex items-center justify-center gap-2 mt-4">
+              <div className="flex items-center justify-center gap-2 mt-3">
                 <Volume2 className="w-4 h-4 text-gray-600" />
                 <input
                   type="range"
@@ -468,14 +527,13 @@ export function MusicPlayer({
                   step="0.1"
                   value={volume}
                   onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  className="w-20 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
             </div>
           </div>
         </div>
       )}
-
 
       {/* Hidden Audio Element */}
       {currentTrack && (
@@ -488,14 +546,16 @@ export function MusicPlayer({
           muted={volume === 0}
           onEnded={() => setIsPlaying(false)}
           onCanPlay={() => console.log('Audio ready to play:', currentTrack.src)}
-          onLoadStart={() => console.log('Audio loading started')}
-          onLoadedData={() => console.log('Audio data loaded')}
-          onLoadedMetadata={(e) => console.log('Audio metadata loaded, duration:', e.currentTarget.duration)}
+          onLoadStart={() => console.log('Audio loading started for:', currentTrack.src)}
+          onLoadedData={() => console.log('Audio data loaded for:', currentTrack.src)}
+          onLoadedMetadata={(e) => console.log('Audio metadata loaded, duration:', e.currentTarget.duration, 'for:', currentTrack.src)}
           onError={(e) => {
-            console.error('Audio error:', e)
+            console.error('Audio error for src:', currentTrack.src)
             const audio = e.currentTarget as HTMLAudioElement
             console.error('Audio error code:', audio.error?.code)
             console.error('Audio error message:', audio.error?.message)
+            console.error('Current audio src:', audio.src)
+            console.error('Track object:', currentTrack)
           }}
         />
       )}

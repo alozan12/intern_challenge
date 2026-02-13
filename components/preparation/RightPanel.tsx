@@ -258,35 +258,49 @@ export function RightPanel({ courseId }: RightPanelProps) {
       }
       */
     } else if (type === 'music') {
-      content = {
-        ...content,
-        genre: selectedGenre, // Use the selected genre
-        tracks: [
-          {
-            id: '1',
-            title: 'Study Flow Beats',
-            artist: 'AI Generated',
-            duration: 180,
-            genre: 'rap',
-            src: '/mock_assets/pythagorean.mp3'
+      // Call API to generate music
+      try {
+        const response = await fetch('/api/study/music', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
           },
-          {
-            id: '2',
-            title: 'Focus Pop Anthem',
-            artist: 'Study Sounds',
-            duration: 240,
-            genre: 'pop',
-            src: '/mock_assets/pythagorean.mp3'
-          },
-          {
-            id: '3',
-            title: 'Rock Your Studies',
-            artist: 'Concentration Co.',
-            duration: 200,
-            genre: 'rock',
-            src: '/mock_assets/pythagorean.mp3'
+          body: JSON.stringify({
+            topic: 'Course Content', // You might want to make this dynamic
+            courseId: courseId,
+            courseName: 'Data Structures', // You might want to pass actual course data
+            courseCode: 'CSE 110',
+            genre: selectedGenre,
+            generationType: contentFocus === 'knowledge_gaps' ? 'learning_gaps' : 'selected_content',
+            studentId: 'student-123', // Mock student ID
+            selectedContent: selectedContentTitles
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to generate music');
+        }
+        
+        const data = await response.json();
+        console.log('Music API response:', data);
+        
+        if (data.music && data.music.content) {
+          content = data.music.content;
+          // Log debug info if available
+          if (data.debug) {
+            console.log('Music generation debug info:', data.debug);
           }
-        ]
+        } else {
+          throw new Error('No music returned from API');
+        }
+      } catch (error) {
+        console.error('Error generating music:', error);
+        // Fallback to empty content
+        content = {
+          ...content,
+          genre: selectedGenre,
+          tracks: []
+        };
       }
     }
     

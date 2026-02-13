@@ -12,3 +12,4 @@ export * from './insights';
 // Study content prompts - use namespaced exports to avoid naming conflicts
 export * as flashcards from './study/flashcards';
 export * as quiz from './study/quiz';
+export * as music from './study/music';
