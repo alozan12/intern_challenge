@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { FileText, BookOpen, Clock, Filter, Search, Brain, Target, Lightbulb, GraduationCap, ArrowRight, ChevronRight, Sparkles, Trash2, X, AlertTriangle, RefreshCw, Loader2, Plus, Zap } from 'lucide-react'
+import { FileText, BookOpen, Clock, Filter, Search, Brain, Target, Lightbulb, GraduationCap, ArrowRight, ChevronRight, Sparkles, Trash2, X, AlertTriangle, RefreshCw, Loader2, Plus, Zap, CalendarDays, MessageSquare, ClipboardCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { CustomStudySession, AIInsight } from '@/types'
-import { format, formatDistanceToNow } from 'date-fns'
+import { format, formatDistanceToNow, isToday, isTomorrow } from 'date-fns'
 import { AnimatePresence, motion } from 'framer-motion'
 import { InsightsList } from '@/components/insights/InsightsList'
 import { InsightsService } from '@/lib/insights-service'
+import { DeadlinesSection, getDeadlineTypeInfo } from '@/components/landing/DeadlinesSection'
 
-type ViewTab = 'sessions' | 'insights'
+type ViewTab = 'sessions' | 'insights' | 'deadlines'
 type IconFilter = 'all' | 'BookOpen' | 'Brain' | 'Target' | 'FileText' | 'Lightbulb' | 'GraduationCap'
 
 export default function BackpackPage() {
@@ -18,8 +20,19 @@ export default function BackpackPage() {
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<ViewTab>(tabParam === 'insights' ? 'insights' : 'sessions')
   const [searchQuery, setSearchQuery] = useState('')
+  const [deadlineSearchQuery, setDeadlineSearchQuery] = useState('')
   const [selectedCourseId, setSelectedCourseId] = useState<string>('all')
   const [selectedIcon, setSelectedIcon] = useState<IconFilter>('all')
+  const [selectedDeadlineType, setSelectedDeadlineType] = useState<'all' | 'assignment' | 'quiz' | 'exam' | 'discussion'>('all')
+  const [selectedTimeFilter, setSelectedTimeFilter] = useState<'all' | 'upcoming' | 'past'>('upcoming')
+  const [selectedSessionTimeFilter, setSelectedSessionTimeFilter] = useState<'recent' | 'oldest'>('recent')
+  
+  // Helper function to get deadline label
+  function getDeadlineLabel(date: Date): string {
+    if (isToday(date)) return 'Today'
+    if (isTomorrow(date)) return 'Tomorrow'
+    return formatDistanceToNow(date, { addSuffix: true })
+  }
   const [customSessions, setCustomSessions] = useState<CustomStudySession[]>([])
   const [courses, setCourses] = useState<any[]>([])
   const [loadingCourses, setLoadingCourses] = useState(true)
@@ -69,6 +82,74 @@ export default function BackpackPage() {
 
   // Initialize insights service
   const insightsService = InsightsService.getInstance()
+
+  // Fetch deadlines data
+  const [deadlines, setDeadlines] = useState<any[]>([])
+  const [loadingDeadlines, setLoadingDeadlines] = useState(true)
+  const [deadlinesError, setDeadlinesError] = useState<string | null>(null)
+  
+  // Fetch deadlines when on deadlines tab
+  useEffect(() => {
+    if (activeTab === 'deadlines') {
+      const fetchDeadlines = async () => {
+        setLoadingDeadlines(true)
+        setDeadlinesError(null)
+        try {
+          const response = await fetch('/api/deadlines')
+          const data = await response.json()
+          
+          if (data.success && data.deadlines) {
+            // Process the deadlines to ensure dueDate is a Date object
+            const processedDeadlines = data.deadlines.map((deadline: any) => ({
+              ...deadline,
+              dueDate: deadline.dueDate ? new Date(deadline.dueDate) : new Date()
+            }))
+            
+            // Sort by due date (earliest first)
+            const sortedDeadlines = processedDeadlines.sort((a: any, b: any) => {
+              return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+            })
+            
+            setDeadlines(sortedDeadlines)
+          } else {
+            setDeadlinesError('Failed to fetch deadlines')
+          }
+        } catch (err) {
+          console.error('Error fetching deadlines:', err)
+          setDeadlinesError('Error fetching deadlines')
+        } finally {
+          setLoadingDeadlines(false)
+        }
+      }
+      
+      fetchDeadlines()
+    }
+  }, [activeTab])
+
+  // Filter deadlines based on course, type, time, and search query
+  const filteredDeadlines = deadlines.filter(deadline => {
+    const now = new Date()
+    const deadlineDate = new Date(deadline.dueDate)
+    
+    const matchesCourse = selectedCourseId === 'all' || String(deadline.courseId) === String(selectedCourseId)
+    const matchesType = selectedDeadlineType === 'all' || deadline.type === selectedDeadlineType
+    
+    // Time filtering
+    const isPast = deadlineDate < now
+    const isUpcoming = deadlineDate >= now
+    const matchesTime = 
+      selectedTimeFilter === 'all' || 
+      (selectedTimeFilter === 'past' && isPast) || 
+      (selectedTimeFilter === 'upcoming' && isUpcoming)
+    
+    // Search filtering
+    const matchesSearch = deadlineSearchQuery === '' || 
+      deadline.title.toLowerCase().includes(deadlineSearchQuery.toLowerCase()) || 
+      deadline.courseName?.toLowerCase().includes(deadlineSearchQuery.toLowerCase()) || 
+      deadline.courseCode?.toLowerCase().includes(deadlineSearchQuery.toLowerCase())
+    
+    return matchesCourse && matchesType && matchesTime && matchesSearch
+  })
 
   // Fetch AI insights
   useEffect(() => {
@@ -129,13 +210,21 @@ export default function BackpackPage() {
     }
   }
   
-  const filteredSessions = customSessions.filter(session => {
-    const matchesSearch = session.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (session.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
-    const matchesCourse = selectedCourseId === 'all' || session.courseId === selectedCourseId
-    const matchesIcon = selectedIcon === 'all' || session.icon === selectedIcon
-    return matchesSearch && matchesCourse && matchesIcon
-  })
+  // Filter sessions based on search, course and icon
+  const filteredSessions = customSessions
+    .filter(session => {
+      const matchesSearch = session.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (session.description?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
+      const matchesCourse = selectedCourseId === 'all' || session.courseId === selectedCourseId
+      const matchesIcon = selectedIcon === 'all' || session.icon === selectedIcon
+      return matchesSearch && matchesCourse && matchesIcon
+    })
+    // Sort by most recent or oldest
+    .sort((a, b) => {
+      const dateA = new Date(a.lastAccessed).getTime()
+      const dateB = new Date(b.lastAccessed).getTime()
+      return selectedSessionTimeFilter === 'recent' ? dateB - dateA : dateA - dateB
+    })
 
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
@@ -178,15 +267,21 @@ export default function BackpackPage() {
     return formatDistanceToNow(date, { addSuffix: true })
   }
   
-  // Function to format days until deadline
-  const formatDaysUntil = (date: Date): string => {
+  // Function to format days until/since deadline
+  const formatDaysUntil = (date: Date | null | undefined): string => {
+    if (!date) return 'Unknown date'
+    
     const now = new Date()
     const diffTime = date.getTime() - now.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Tomorrow'
-    if (diffDays < 0) return 'Overdue'
+    if (diffDays < 0) {
+      // Past deadline
+      if (diffDays === -1) return 'Yesterday'
+      return `${Math.abs(diffDays)} days ago`
+    }
     return `In ${diffDays} days`
   }
   
@@ -360,27 +455,53 @@ export default function BackpackPage() {
       )}
 
       {/* Tabs */}
-      <div className="mb-6">
-        <nav className="flex space-x-6 border-b border-gray-200">
+      <div className="mb-0 relative">
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-200" />
+        <nav className="flex relative h-12">{/* Fixed height container for tabs */}
           <button
             onClick={() => setActiveTab('sessions')}
             className={cn(
-              "pb-3 px-1 border-b-2 font-medium text-sm transition-colors",
+              "py-3 px-6 font-medium text-sm transition-all relative rounded-t-lg flex items-center gap-2 z-10 h-full",
               activeTab === 'sessions'
-                ? "border-yellow-400 text-yellow-500"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "bg-white text-yellow-600 border border-gray-200 border-b-white shadow-sm -mb-0.5"
+                : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-50 hover:text-gray-700 mr-1"
             )}
+            style={{
+              transform: activeTab === 'sessions' ? 'translateY(0)' : 'translateY(1px)',
+              transition: 'transform 0.15s ease-in-out, background-color 0.15s ease-in-out'
+            }}
           >
+            <BookOpen className="w-4 h-4" />
             Custom Sessions
+          </button>
+          <button
+            onClick={() => setActiveTab('deadlines')}
+            className={cn(
+              "py-3 px-6 font-medium text-sm transition-all relative rounded-t-lg flex items-center gap-2 z-10 h-full",
+              activeTab === 'deadlines'
+                ? "bg-white text-blue-600 border border-gray-200 border-b-white shadow-sm -mb-0.5"
+                : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-50 hover:text-gray-700 mr-1"
+            )}
+            style={{
+              transform: activeTab === 'deadlines' ? 'translateY(0)' : 'translateY(1px)',
+              transition: 'transform 0.15s ease-in-out, background-color 0.15s ease-in-out'
+            }}
+          >
+            <CalendarDays className="w-4 h-4" />
+            Deadlines
           </button>
           <button
             onClick={() => setActiveTab('insights')}
             className={cn(
-              "pb-3 px-1 border-b-2 font-medium text-sm transition-colors flex items-center gap-2",
+              "py-3 px-6 font-medium text-sm transition-all relative rounded-t-lg flex items-center gap-2 z-10 h-full",
               activeTab === 'insights'
-                ? "border-yellow-400 text-green-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                ? "bg-white text-green-600 border border-gray-200 border-b-white shadow-sm -mb-0.5"
+                : "bg-gray-100 text-gray-600 border-transparent hover:bg-gray-50 hover:text-gray-700"
             )}
+            style={{
+              transform: activeTab === 'insights' ? 'translateY(0)' : 'translateY(1px)',
+              transition: 'transform 0.15s ease-in-out, background-color 0.15s ease-in-out'
+            }}
           >
             <Sparkles className="w-4 h-4" />
             AI Insights
@@ -388,78 +509,291 @@ export default function BackpackPage() {
         </nav>
       </div>
 
-      {activeTab === 'sessions' ? (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100">
-          {/* Search bar */}
+      {activeTab === 'deadlines' ? (
+        <div className="bg-white rounded-lg rounded-tl-none shadow-sm border border-gray-200">
           <div className="p-4 border-b border-gray-200">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search your study sessions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
-              />
+            <div className="flex items-center gap-3">
+              <CalendarDays className="w-5 h-5 text-[#8C1D40]" />
+              <p className="text-sm text-gray-600">
+                View {selectedTimeFilter === 'all' ? 'all' : selectedTimeFilter === 'upcoming' ? 'upcoming' : 'past'} deadlines 
+                {selectedDeadlineType !== 'all' ? ` (${selectedDeadlineType}s only)` : ''} 
+                {selectedCourseId === 'all' ? ' across all courses' : ` for ${courses.find(c => c.course_id === selectedCourseId)?.course_code || 'selected course'}`}.
+              </p>
             </div>
           </div>
-
-          {/* Filter Section */}
-          <div className="p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Filter:</h3>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedCourseId('all')}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-medium transition-colors",
-                  selectedCourseId === 'all'
-                    ? "bg-yellow-400 text-gray-800"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                )}
-                style={{
-                  borderRadius: '4px',
-                  border: 'none',
-                  outline: 'none'
-                }}
-              >
-                All Courses
-              </button>
-              {!loadingCourses && courses.map(course => {
-                const courseColor = getCourseColor(course.course_id);
-                return (
+          
+          {/* Filters for deadlines */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Course Filter - Keep visible */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <h3 className="text-sm font-semibold text-gray-700 mr-2">Filter by course:</h3>
+                <div className="flex flex-wrap gap-2">
                   <button
-                    key={course.course_id}
-                    onClick={() => setSelectedCourseId(course.course_id)}
+                    onClick={() => setSelectedCourseId('all')}
                     className={cn(
-                      "px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5",
-                      selectedCourseId === course.course_id
-                        ? "text-white"
+                      "px-3 py-1.5 text-xs font-medium transition-colors",
+                      selectedCourseId === 'all'
+                        ? "bg-yellow-400 text-gray-800"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     )}
-                    style={{ 
-                      backgroundColor: selectedCourseId === course.course_id 
-                        ? courseColor 
-                        : undefined,
+                    style={{
                       borderRadius: '4px',
                       border: 'none',
                       outline: 'none'
                     }}
                   >
-                    <div 
-                      className={cn(
-                        "w-2 h-2 rounded-full",
-                        selectedCourseId === course.course_id ? "bg-white" : ""
-                      )}
-                      style={{ 
-                        backgroundColor: selectedCourseId === course.course_id 
-                          ? "white" 
-                          : courseColor
-                      }}
-                    ></div>
-                    <span>{course.course_code}</span>
+                    All Courses
                   </button>
-                );
-              })}
+                  {!loadingCourses && courses.map(course => {
+                    return (
+                      <button
+                        key={course.course_id}
+                        onClick={() => setSelectedCourseId(course.course_id)}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-medium transition-colors",
+                          selectedCourseId === course.course_id
+                            ? "bg-gray-300 text-gray-800"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        )}
+                        style={{ 
+                          borderRadius: '4px',
+                          border: 'none',
+                          outline: 'none'
+                        }}
+                      >
+                        <span>{course.course_code}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Type Filter - Convert to dropdown */}
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-gray-700">Type:</h3>
+                <select
+                  value={selectedDeadlineType}
+                  onChange={(e) => setSelectedDeadlineType(e.target.value as any)}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                >
+                  <option value="all">All Types</option>
+                  <option value="assignment">Assignments</option>
+                  <option value="quiz">Quizzes</option>
+                  <option value="exam">Exams</option>
+                  <option value="discussion">Discussions</option>
+                </select>
+              </div>
+              
+              {/* Time Filter - Convert to dropdown */}
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-gray-700">Time:</h3>
+                <select
+                  value={selectedTimeFilter}
+                  onChange={(e) => setSelectedTimeFilter(e.target.value as any)}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                >
+                  <option value="all">All Deadlines</option>
+                  <option value="upcoming">Upcoming</option>
+                  <option value="past">Past</option>
+                </select>
+              </div>
+              
+              {/* Search - Added to match other tabs */}
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-gray-700">Search:</h3>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search deadlines..."
+                    value={deadlineSearchQuery}
+                    onChange={(e) => setDeadlineSearchQuery(e.target.value)}
+                    className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-sm w-48"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Deadlines Content */}
+          {loadingDeadlines ? (
+            <div className="p-16 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-solid border-current border-r-transparent text-[#8C1D40] motion-reduce:animate-[spin_1.5s_linear_infinite] mb-3"></div>
+              <p className="text-gray-500">Loading deadlines...</p>
+            </div>
+          ) : deadlinesError ? (
+            <div className="p-16 text-center">
+              <p className="text-red-500">{deadlinesError}</p>
+              <button 
+                className="mt-2 text-[#8C1D40] hover:underline"
+                onClick={() => {
+                  setActiveTab('deadlines');
+                }}
+              >
+                Try again
+              </button>
+            </div>
+          ) : filteredDeadlines.length > 0 ? (
+            <div className="max-h-[600px] overflow-y-auto">
+              {filteredDeadlines.map((deadline) => (
+                <div 
+                  key={deadline.id}
+                  className={cn(
+                    "p-4 border-b border-gray-200 hover:bg-gray-50 transition-colors",
+                    new Date(deadline.dueDate) < new Date() ? "bg-gray-50" : ""
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Icon with background */}
+                    <div className={cn(
+                      "p-2 rounded-lg flex-shrink-0",
+                      getDeadlineTypeInfo(deadline.type).bgColor,
+                      getDeadlineTypeInfo(deadline.type).color
+                    )}>
+                      {getDeadlineTypeInfo(deadline.type).icon}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      {/* Deadline title and badge */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-gray-900 text-sm">
+                          {deadline.title}
+                        </h3>
+                        <span className={cn(
+                          "px-2 py-0.5 text-xs font-medium rounded-full",
+                          getDeadlineTypeInfo(deadline.type).badgeColor
+                        )}>
+                          {deadline.type.charAt(0).toUpperCase() + deadline.type.slice(1)}
+                        </span>
+                      </div>
+                      
+                      {/* Course info */}
+                      <p className="text-xs text-gray-600 mb-2">
+                        {deadline.courseCode} - {deadline.courseName}
+                      </p>
+                      
+                      {/* Due date info */}
+                      <div className="flex items-center gap-3 text-xs">
+                        <div className={cn(
+                          "flex items-center gap-1",
+                          new Date(deadline.dueDate) < new Date() ? "text-red-500" : "text-gray-500"
+                        )}>
+                          <Clock className="w-3 h-3" />
+                          <span>{getDeadlineLabel(deadline.dueDate)}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-gray-500">
+                          <CalendarDays className="w-3 h-3" />
+                          <span suppressHydrationWarning>{format(deadline.dueDate, 'MMM d, h:mm a')}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Action button */}
+                    <div className="flex-shrink-0">
+                      <Link 
+                        href={`/preparation/${deadline.courseId}/${deadline.id}`}
+                        className="px-4 py-2 bg-[#8C1D40] text-white rounded-md text-xs flex items-center gap-1 hover:bg-[#8C1D40]/90 transition-colors shadow-sm"
+                      >
+                        {new Date(deadline.dueDate) < new Date() ? 'Revisit' : 'Study'}
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-16 text-center">
+              <p className="text-gray-500">No deadlines found matching your filters.</p>
+            </div>
+          )}
+        </div>
+      ) : activeTab === 'sessions' ? (
+        <div className="bg-white rounded-lg rounded-tl-none shadow-sm border border-gray-200 border-t-0">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <BookOpen className="w-5 h-5 text-[#8C1D40]" />
+              <p className="text-sm text-gray-600">
+                View and manage your custom study sessions.
+              </p>
+            </div>
+          </div>
+
+          {/* Filter Section */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center gap-4 flex-wrap">
+              {/* Course Filter - Button style like deadlines tab */}
+              <div className="flex flex-wrap gap-2 items-center">
+                <h3 className="text-sm font-semibold text-gray-700 mr-2">Filter by course:</h3>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedCourseId('all')}
+                    className={cn(
+                      "px-3 py-1.5 text-xs font-medium transition-colors",
+                      selectedCourseId === 'all'
+                        ? "bg-yellow-400 text-gray-800"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    )}
+                    style={{
+                      borderRadius: '4px',
+                      border: 'none',
+                      outline: 'none'
+                    }}
+                  >
+                    All Courses
+                  </button>
+                  {!loadingCourses && courses.map(course => {
+                    return (
+                      <button
+                        key={course.course_id}
+                        onClick={() => setSelectedCourseId(course.course_id)}
+                        className={cn(
+                          "px-3 py-1.5 text-xs font-medium transition-colors",
+                          selectedCourseId === course.course_id
+                            ? "bg-gray-300 text-gray-800"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        )}
+                        style={{ 
+                          borderRadius: '4px',
+                          border: 'none',
+                          outline: 'none'
+                        }}
+                      >
+                        <span>{course.course_code}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Time Filter */}
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-gray-700">Sort by:</h3>
+                <select
+                  value={selectedSessionTimeFilter}
+                  onChange={(e) => setSelectedSessionTimeFilter(e.target.value as 'recent' | 'oldest')}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400"
+                >
+                  <option value="recent">Most Recent</option>
+                  <option value="oldest">Oldest</option>
+                </select>
+              </div>
+              
+              {/* Search */}
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-gray-700">Search:</h3>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search sessions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-sm w-48"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -468,7 +802,7 @@ export default function BackpackPage() {
             <AnimatePresence>
               {filteredSessions.length > 0 ? (
                 <motion.div 
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                  className="space-y-3"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -494,18 +828,13 @@ export default function BackpackPage() {
                     return (
                       <motion.div
                         key={session.id}
-                        className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden"
+                        className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:bg-gray-50"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ 
                           duration: 0.2, 
                           delay: index * 0.05
-                        }}
-                        whileHover={{ 
-                          y: -2,
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                          transition: { duration: 0.2 }
                         }}
                         onClick={(e) => {
                           // Prevent triggering if clicking the Continue button
@@ -514,45 +843,41 @@ export default function BackpackPage() {
                           }
                         }}
                       >
-                        <div className="p-4">
-                          {/* Course code and icon */}
-                          <div className="flex items-center gap-1.5 mb-3">
-                            <div className="w-4 h-4 flex-shrink-0">
-                              <Icon className="w-4 h-4" style={{ color: courseColor }} />
-                            </div>
-                            <p className="text-xs font-medium text-gray-500">{getCourseCode(session.courseId)}</p>
-                          </div>
-                          
-                          {/* Title */}
-                          <h3 className="font-medium text-gray-900 mb-2">{session.name}</h3>
-                          
-                          {/* Description */}
-                          {session.description && (
-                            <p className="text-sm text-gray-500 mb-3">{session.description}</p>
-                          )}
-                          
-                          {/* Last accessed time */}
-                          <div className="flex items-center gap-1 text-xs text-gray-400 mb-4">
-                            <Clock className="w-3 h-3 flex-shrink-0" />
-                            <span>Last accessed {formatSessionDate(session.lastAccessed)}</span>
-                          </div>
-                          
-                          {/* Bottom section */}
-                          <div className="flex justify-between items-center">
-                            {/* Session type tag */}
+                        <div className="p-4 px-6">
+                          <div className="flex items-start gap-3 justify-between">
+                            {/* Icon with background */}
                             <div 
-                              className="flex items-center gap-1 text-xs px-2 py-1 rounded-full"
-                              style={{ 
-                                backgroundColor: `${courseColor}15`, // 15% opacity 
-                                color: courseColor 
-                              }}
+                              className="p-2 rounded-lg flex-shrink-0 text-white"
+                              style={{ backgroundColor: '#8C1D40' }}
                             >
-                              <Icon className="w-3 h-3" />
-                              <span>{typeLabel}</span>
+                              <Icon className="w-4 h-4" />
+                            </div>
+
+                            <div className="flex-1 min-w-0 pr-4">
+                              {/* Session title */}
+                              <div className="mb-1">
+                                <h3 className="font-medium text-gray-900 text-sm">
+                                  {session.name}
+                                </h3>
+                              </div>
+                              
+                              {/* Course info */}
+                              <p className="text-xs text-gray-600 mb-2">
+                                {getCourseCode(session.courseId)}
+                                {session.description && ` - ${session.description}`}
+                              </p>
+                              
+                              {/* Date info */}
+                              <div className="flex items-center gap-3 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>Last accessed {formatSessionDate(session.lastAccessed)}</span>
+                                </div>
+                              </div>
                             </div>
                             
                             {/* Action buttons */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0 flex items-center gap-2">
                               <button 
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -570,10 +895,10 @@ export default function BackpackPage() {
                                   e.stopPropagation();
                                   router.push(`/preparation/custom/${session.id}`);
                                 }}
-                                className="px-4 py-1.5 text-white rounded text-sm font-medium"
-                                style={{ backgroundColor: courseColor }}
+                                className="px-4 py-2 bg-[#8C1D40] text-white rounded-md text-xs flex items-center gap-1 hover:bg-[#8C1D40]/90 transition-colors shadow-sm"
                               >
-                                Continue
+                                Study
+                                <ArrowRight className="w-3 h-3" />
                               </button>
                             </div>
                           </div>
@@ -599,7 +924,7 @@ export default function BackpackPage() {
         </div>
       ) : (
         /* AI Insights Tab */
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100">
+        <div className="bg-white rounded-lg rounded-tl-none shadow-sm border border-gray-200 border-t-0">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -654,22 +979,22 @@ export default function BackpackPage() {
             ) : (
               <AnimatePresence>
                 <motion.div 
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+                  className="space-y-3"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
                   {aiInsights.map((insight, index) => {
+                    // Choose icon based on type
                     const Icon = getIconComponent(insight.type === 'review' ? 'BookOpen' : 
                                                   insight.type === 'practice' ? 'Target' : 
                                                   insight.type === 'strengthen' ? 'Brain' : 'Sparkles');
-                    const courseColor = getCourseColor(insight.courseId);
                     
                     return (
                       <motion.div
                         key={insight.id}
-                        className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden cursor-pointer hover:bg-gray-50"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
@@ -677,81 +1002,65 @@ export default function BackpackPage() {
                           duration: 0.2, 
                           delay: index * 0.05
                         }}
-                        whileHover={{ 
-                          y: -2,
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                          transition: { duration: 0.2 }
-                        }}
                         onClick={() => router.push(`/study/${insight.courseId}/${insight.topic}`)}
                       >
-                        <div className="p-4">
-                          {/* Priority indicator */}
-                          {insight.priority && (
-                            <div className="flex justify-end mb-2">
-                              <span className={cn(
-                                "text-xs px-2 py-1 rounded-full font-medium",
-                                insight.priority === 'high' ? "bg-red-100 text-red-700" :
-                                insight.priority === 'medium' ? "bg-yellow-100 text-yellow-700" :
-                                "bg-green-100 text-green-700"
-                              )}>
-                                {insight.priority} priority
-                              </span>
+                        <div className="p-4 px-6">
+                          <div className="flex items-start gap-3 justify-between">
+                            {/* Icon with background */}
+                            <div className={cn(
+                              "p-2 rounded-lg flex-shrink-0",
+                              insight.priority === 'high' ? "bg-red-50 text-red-700" :
+                              insight.priority === 'medium' ? "bg-yellow-50 text-yellow-700" :
+                              insight.priority === 'low' ? "bg-green-50 text-green-700" :
+                              "bg-gray-50 text-gray-700"
+                            )}>
+                              <Icon className="w-4 h-4" />
                             </div>
-                          )}
-                          
-                          {/* Course code and icon */}
-                          <div className="flex items-center gap-1.5 mb-3">
-                            <div className="w-4 h-4 flex-shrink-0">
-                              <Icon className="w-4 h-4" style={{ color: courseColor }} />
-                            </div>
-                            <p className="text-xs font-medium text-gray-500">{insight.courseCode}</p>
-                          </div>
-                          
-                          {/* Title */}
-                          <h3 className="font-medium text-gray-900 mb-2">{insight.title}</h3>
-                          
-                          {/* Description */}
-                          <p className="text-sm text-gray-500 mb-3 line-clamp-2">{insight.description}</p>
-                          
-                          {/* Duration and deadline */}
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-1 text-xs text-gray-400">
-                              <Clock className="w-3 h-3 flex-shrink-0" />
-                              <span>{insight.duration} minutes</span>
-                            </div>
-                            {insight.deadline && (
-                              <div className="flex items-center gap-1 text-xs text-amber-600">
-                                <Calendar className="w-3 h-3" />
-                                <span>{formatDaysUntil(insight.deadline.dueDate)}</span>
+
+                            <div className="flex-1 min-w-0 pr-4">
+                              {/* Insight title */}
+                              <div className="mb-1">
+                                <h3 className="font-medium text-gray-900 text-sm">
+                                  {insight.title}
+                                </h3>
                               </div>
-                            )}
-                          </div>
-                          
-                          {/* Bottom section */}
-                          <div className="flex justify-between items-center">
-                            {/* Type tag */}
-                            <div 
-                              className="flex items-center gap-1 text-xs px-2 py-1 rounded-full"
-                              style={{ 
-                                backgroundColor: `${courseColor}15`, // 15% opacity
-                                color: courseColor 
-                              }}
-                            >
-                              <Icon className="w-3 h-3" />
-                              <span>{insight.type}</span>
+                              
+                              {/* Course info and description */}
+                              <p className="text-xs text-gray-600 mb-2">
+                                {insight.courseCode} - {insight.description}
+                              </p>
+                              
+                              {/* Duration and deadline */}
+                              <div className="flex items-center gap-3 text-xs text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  <span>{insight.duration} minutes</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <CalendarDays className="w-3 h-3" />
+                                  <span className="text-gray-500">
+                                    {insight.type === 'review' ? 'Review' : 
+                                     insight.type === 'practice' ? 'Practice' : 
+                                     insight.type === 'strengthen' ? 'Strengthen' : 
+                                     'Prepare'}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                             
-                            {/* Start button */}
-                            <button 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/study/${insight.courseId}/${insight.topic}`);
-                              }}
-                              className="px-4 py-1.5 text-white rounded text-sm font-medium hover:opacity-90"
-                              style={{ backgroundColor: courseColor }}
-                            >
-                              Start
-                            </button>
+                            {/* Action button */}
+                            <div className="flex-shrink-0">
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  router.push(`/study/${insight.courseId}/${insight.topic}`);
+                                }}
+                                className="px-4 py-2 bg-[#8C1D40] text-white rounded-md text-xs flex items-center gap-1 hover:bg-[#8C1D40]/90 transition-colors shadow-sm"
+                              >
+                                Study
+                                <ArrowRight className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </motion.div>

@@ -2,14 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Clock, Bell, MessageSquare, Users, X, PlayCircle, PauseCircle, RotateCcw, SunMedium, Menu, ChevronRight, RefreshCw, Plus, BookOpen, Brain, Target, FileText, Lightbulb, GraduationCap } from 'lucide-react'
+import { Clock, Bell, MessageSquare, Users, X, PlayCircle, PauseCircle, RotateCcw, SunMedium, RefreshCw, Plus, BookOpen, Brain, Target, FileText, Lightbulb, GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useViewMode } from '@/context/ViewModeContext'
 
-interface TopBarProps {
-  onToggleSidebar?: () => void;
-  isSidebarMinimized?: boolean;
-}
+interface TopBarProps {}
 
 // Pomodoro Timer Tool
 function PomodoroTool() {
@@ -414,7 +411,7 @@ function NewStudyButton() {
         )}
       >
         <Plus className="w-4 h-4" />
-        <span>New Study</span>
+        <span>New Session</span>
       </button>
 
       {/* New Study Modal */}
@@ -547,7 +544,7 @@ function NewStudyButton() {
   )
 }
 
-export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}) {
+export function TopBar({}: TopBarProps = {}) {
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
   const { viewMode, setViewMode } = useViewMode();
@@ -642,26 +639,12 @@ export function TopBar({ onToggleSidebar, isSidebarMinimized }: TopBarProps = {}
     <div className="h-14 bg-white border-b border-gray-200 shadow-sm flex items-center justify-between px-8 z-40 relative">
       <div className="flex items-center">
         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          {/* Toggle sidebar button - only show for Coursework */}
-          {pathname.startsWith('/preparation') && onToggleSidebar && (
-            <button 
-              onClick={onToggleSidebar}
-              className="p-1.5 mr-2 rounded-md hover:bg-gray-100 transition-colors"
-              title={isSidebarMinimized ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {isSidebarMinimized ? 
-                <ChevronRight className="w-5 h-5 text-gray-600" /> : 
-                <Menu className="w-5 h-5 text-gray-600" />
-              }
-            </button>
-          )}
           {pageTitle} {isLandingPage && <SunMedium className="text-yellow-400 h-6 w-6" />}
         </h1>
         <p className="text-gray-500 ml-4">{formattedDate}</p>
       </div>
       <div className="flex items-center gap-3">
         <NewStudyButton />
-        <div className="h-6 w-px bg-gray-300" />
         <PomodoroTool />
         <RemindersTool />
         <AIChatTool />

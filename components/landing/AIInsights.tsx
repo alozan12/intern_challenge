@@ -54,22 +54,50 @@ export function AIInsights() {
     fetchInsights(true); // Force refresh
   };
 
-  // Function to get icon based on insight type
-  const getIcon = (type: AIInsight['type']) => {
-    switch (type) {
+  // Function to get icon based on insight type and priority
+  const getIcon = (insight: AIInsight) => {
+    // Determine the icon based on type
+    let IconComponent;
+    switch (insight.type) {
       case 'review':
-        return <BookOpen className="w-4 h-4 text-[#8C1D40]" />
+        IconComponent = BookOpen;
+        break;
       case 'practice':
-        return <Target className="w-4 h-4 text-[#8C1D40]" />
+        IconComponent = Target;
+        break;
       case 'strengthen':
-        return <TrendingUp className="w-4 h-4 text-[#8C1D40]" />
+        IconComponent = TrendingUp;
+        break;
       case 'prepare':
-        return <Sparkles className="w-4 h-4 text-[#8C1D40]" />
+        IconComponent = Sparkles;
+        break;
+      default:
+        IconComponent = BookOpen;
     }
+    
+    // Determine color based on priority
+    let color;
+    switch (insight.priority) {
+      case 'high':
+        color = 'text-red-700';
+        break;
+      case 'medium':
+        color = 'text-yellow-700';
+        break;
+      case 'low':
+        color = 'text-green-700';
+        break;
+      default:
+        color = 'text-gray-700';
+    }
+    
+    return <IconComponent className={`w-4 h-4 ${color}`} />
   }
 
   // Function to format days until deadline
-  const formatDaysUntil = (date: Date): string => {
+  const formatDaysUntil = (date: Date | undefined | null): string => {
+    if (!date) return 'Unknown date'
+    
     const now = new Date()
     const diffTime = date.getTime() - now.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
@@ -147,17 +175,17 @@ export function AIInsights() {
           insights.map((insight) => (
             <div 
               key={insight.id}
-              className="bg-white rounded-lg p-4 shadow-sm border border-gray-200"
+              className="bg-white rounded-lg p-4 px-6 shadow-sm border border-gray-200"
             >
               <div className="flex items-center gap-1.5 mb-2">
                 <div className="w-4 h-4 flex-shrink-0">
-                  {getIcon(insight.type)}
+                  {getIcon(insight)}
                 </div>
                 <p className="text-xs font-medium text-gray-500">{insight.courseCode}</p>
               </div>
               
               <div className="flex justify-between items-start mb-2">
-                <h3 className="font-medium text-gray-900">{insight.title}</h3>
+                <h3 className="font-medium text-gray-900 pr-4">{insight.title}</h3>
                 <div className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
                   <Clock className="w-3 h-3 flex-shrink-0" />
                   <span>{insight.duration} min</span>
@@ -166,7 +194,7 @@ export function AIInsights() {
               
               <p className="text-sm text-gray-600 mb-3">{insight.description}</p>
               
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-4">
                 {insight.deadline ? (
                   <div className="flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
                     <Calendar className="w-3 h-3" />
@@ -183,7 +211,7 @@ export function AIInsights() {
                   href={`/study/${insight.courseId}/${insight.topic}`}
                   className="px-3 py-1.5 bg-[#8C1D40] text-white rounded text-sm font-medium hover:bg-[#8C1D40]/90"
                 >
-                  Start
+                  Study
                 </Link>
               </div>
             </div>

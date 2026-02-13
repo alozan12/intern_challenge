@@ -243,7 +243,7 @@ export default function LandingPage() {
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900">Upcoming Deadlines</h2>
                 <Link 
-                  href="/coursework" 
+                  href="/library?tab=deadlines" 
                   className="text-sm text-[#8C1D40] hover:underline flex items-center gap-1"
                 >
                   <span>View All Coursework</span>

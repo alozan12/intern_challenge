@@ -15,7 +15,7 @@ interface DeadlinesSectionProps {
 }
 
 // Helper function to get appropriate icon and color based on deadline type
-function getDeadlineTypeInfo(type: Deadline['type']): { icon: React.ReactNode; color: string; bgColor: string; badgeColor: string } {
+export function getDeadlineTypeInfo(type: Deadline['type']): { icon: React.ReactNode; color: string; bgColor: string; badgeColor: string } {
   switch (type) {
     case 'assignment':
       return {
@@ -159,7 +159,7 @@ export function DeadlinesSection({ courses, showTitle = true, useLiveData = true
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Upcoming Deadlines</h2>
             <Link 
-              href="/preparation"
+              href="/library?tab=deadlines"
               className="text-xs text-primary-maroon hover:underline flex items-center gap-1"
             >
               View All
@@ -238,7 +238,7 @@ export function DeadlinesSection({ courses, showTitle = true, useLiveData = true
                     href={`/preparation/${deadline.courseId}/${deadline.id}`}
                     className="px-3 py-1.5 bg-[#8C1D40] text-white rounded-md text-xs flex items-center gap-1 hover:bg-[#8C1D40]/90 transition-colors shadow-sm"
                   >
-                    Prepare
+                    Study
                     <ArrowRight className="w-2 h-2" />
                   </Link>
                 </motion.div>
