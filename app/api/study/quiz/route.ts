@@ -12,8 +12,9 @@ interface QuizRequest {
   topic: string;
   courseId?: string;
   difficulty?: 'basic' | 'intermediate' | 'advanced';
-  generationType?: 'learning_gaps' | 'general_content';
+  generationType?: 'learning_gaps' | 'selected_content';
   studentId?: string;
+  selectedContent?: string[];
 }
 
 // Load knowledge base data
@@ -45,8 +46,9 @@ export async function POST(req: NextRequest) {
       topic, 
       courseId, 
       difficulty = 'intermediate', 
-      generationType = 'general_content',
-      studentId = '987654' 
+      generationType = 'selected_content',
+      studentId = '987654',
+      selectedContent = [] 
     }: QuizRequest = await req.json();
     
     if (!topic) {
@@ -82,8 +84,14 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // If no learning gaps found, extract general topics from course items
-    if (!knowledgeContext) {
+    // If selected content is provided, use it instead of general topics
+    if (generationType === 'selected_content' && selectedContent && selectedContent.length > 0) {
+      knowledgeContext = `\n\nFocus on the following selected content:\n${
+        selectedContent.map(content => `- ${content}`).join('\n')
+      }\n\nCreate quiz questions that specifically cover this selected content.`;
+    }
+    // If no learning gaps or selected content found, extract general topics from course items
+    else if (!knowledgeContext) {
       const topics = new Set<string>();
       courseItems.forEach((item: any) => {
         if (item.attempts && item.attempts.length > 0) {

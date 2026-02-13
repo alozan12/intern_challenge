@@ -18,7 +18,7 @@ export function Sidebar({ isMinimized = false, onToggle }: SidebarProps) {
 
   const menuItems = [
     { icon: Home, label: 'Home', href: '/' },
-    { icon: Library, label: 'My Backpack', href: '/library' },
+    { icon: Library, label: 'Backpack', href: '/library' },
     { icon: BarChart3, label: 'Analytics', href: '/analytics' },
     { icon: Calendar, label: 'Calendar', href: '/calendar' },
     { icon: Settings, label: 'Settings', href: '/settings' },

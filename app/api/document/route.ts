@@ -13,6 +13,8 @@ interface DocumentRequest {
   documentType?: 'flashcards' | 'quiz' | 'outline';
   topic?: string;
   stream?: boolean;
+  selectedContent?: string[];
+  generationType?: 'learning_gaps' | 'selected_content';
 }
 
 interface Flashcard {
@@ -32,7 +34,7 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    const { studentId, courseId, documentType = 'flashcards', topic, stream = false }: DocumentRequest = await req.json();
+    const { studentId, courseId, documentType = 'flashcards', topic, stream = false, selectedContent = [], generationType = 'selected_content' }: DocumentRequest = await req.json();
     
     if (!studentId) {
       return NextResponse.json(
@@ -103,9 +105,14 @@ export async function POST(req: NextRequest) {
         break;
     }
     
-    // Add context about learning gaps if available
-    if (learningGapsData && typeof learningGapsData === 'object' && Object.keys(learningGapsData).length > 0) {
+    // Add context about learning gaps if using learning_gaps generationType
+    if (generationType === 'learning_gaps' && learningGapsData && typeof learningGapsData === 'object' && Object.keys(learningGapsData).length > 0) {
       userPrompt += ' Focus especially on addressing these learning gaps and concepts the student needs to improve on. Target content at the right difficulty level to help them build confidence in these areas.';
+    }
+    
+    // Add context about selected content if available and using selected_content generationType
+    if (generationType === 'selected_content' && selectedContent && selectedContent.length > 0) {
+      userPrompt += ` Focus specifically on the following selected content: ${selectedContent.join(', ')}. Create materials that directly address these specific topics without straying to other areas.`;
     }
     
     // Specify that the AI should focus on education quality
@@ -121,7 +128,9 @@ export async function POST(req: NextRequest) {
       contentRequest: {
         type: documentType,
         topic,
-        focusAreas: getTopicsFromLearningGaps(learningGapsData)
+        generationType,
+        selectedContent: selectedContent && selectedContent.length > 0 ? selectedContent : [],
+        focusAreas: generationType === 'learning_gaps' ? getTopicsFromLearningGaps(learningGapsData) : []
       },
       // Inject sample format to guide the model
       formatExample: getSampleFormat(documentType)

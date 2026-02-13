@@ -79,8 +79,11 @@ export class InsightsService {
       const data = await response.json()
       
       // Map the recommendations to our AIInsight format
-      if (data.type === 'recommendation' && Array.isArray(data.data?.recommendations)) {
-        return data.data.recommendations.map((rec: any, index: number) => {
+      if ((data.type === 'recommendation' && Array.isArray(data.data?.recommendations)) || 
+          (Array.isArray(data?.recommendations))) {
+        // Handle both response formats - either data.data.recommendations or data.recommendations
+        const recommendations = data.data?.recommendations || data.recommendations || [];
+        return recommendations.map((rec: any, index: number) => {
           // Use course info provided by AI if available
           let courseId = rec.courseId || 'unknown'
           let courseName = rec.courseName || 'General Course'
@@ -137,7 +140,9 @@ export class InsightsService {
         })
       }
       
-      throw new Error('Invalid API response format')
+      console.warn('Unexpected API response format:', JSON.stringify(data));
+      // Return an empty array instead of throwing error
+      return []
     } catch (error) {
       console.error('Error fetching insights from API:', error)
       throw error

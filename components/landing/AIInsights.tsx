@@ -24,7 +24,18 @@ export function AIInsights() {
       
       // Get preview insights (limited to 3 for landing page)
       const previewInsights = await insightsService.getPreviewInsights(studentId, 3);
-      setInsights(previewInsights);
+      
+      // Validate we got valid insights back
+      if (Array.isArray(previewInsights) && previewInsights.length > 0) {
+        setInsights(previewInsights);
+      } else {
+        console.warn('Received empty insights array');
+        setInsights([]);
+        // Only set error if array is completely empty
+        if (!previewInsights || previewInsights.length === 0) {
+          setError('No insights available right now');
+        }
+      }
     } catch (err) {
       console.error('Error fetching insights:', err);
       setError('Failed to load insights');
@@ -98,8 +109,14 @@ export function AIInsights() {
   const formatDaysUntil = (date: Date | undefined | null): string => {
     if (!date) return 'Unknown date'
     
+    // Ensure date is a Date object
+    const dueDate = date instanceof Date ? date : new Date(date)
+    
+    // Check if the date is valid before using getTime
+    if (isNaN(dueDate.getTime())) return 'Invalid date'
+    
     const now = new Date()
-    const diffTime = date.getTime() - now.getTime()
+    const diffTime = dueDate.getTime() - now.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
     if (diffDays === 0) return 'Today'

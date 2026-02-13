@@ -10,6 +10,7 @@ import { MultipleChoiceQuiz } from '@/components/study-materials/MultipleChoiceQ
 import { FlashcardSet } from '@/components/study-materials/FlashcardSet'
 import { MusicPlayer } from '@/components/study-materials/MusicPlayer'
 import { useViewMode } from '@/context/ViewModeContext'
+import { useSelectedMaterials } from '@/context/SelectedMaterialsContext'
 
 interface RightPanelProps {
   courseId: string
@@ -23,7 +24,7 @@ interface StudyOption {
   color: string
 }
 
-type ContentFocus = 'all' | 'knowledge_gaps' | 'specific_sections'
+type ContentFocus = 'selected_content' | 'knowledge_gaps'
 type MusicGenreType = 'rap' | 'pop' | 'opera' | 'jazz' | 'rock' | 'retro'
 
 interface ContentFocusOption {
@@ -58,10 +59,11 @@ const studyOptions: StudyOption[] = [
 ]
 
 export function RightPanel({ courseId }: RightPanelProps) {
+  const { selectedMaterials } = useSelectedMaterials()
   const [showOptions, setShowOptions] = useState(false)
   const [createdMaterials, setCreatedMaterials] = useState<StudyMaterial[]>([])
   const [selectedMaterial, setSelectedMaterial] = useState<string | null>(null)
-  const [contentFocus, setContentFocus] = useState<ContentFocus>('all')
+  const [contentFocus, setContentFocus] = useState<ContentFocus>('selected_content')
   const [showFocusDropdown, setShowFocusDropdown] = useState(false)
   const [showSectionsDropdown, setShowSectionsDropdown] = useState(false)
   const [specificSections, setSpecificSections] = useState<string[]>([])
@@ -90,9 +92,9 @@ export function RightPanel({ courseId }: RightPanelProps) {
 
   const contentFocusOptions: ContentFocusOption[] = [
     {
-      value: 'all',
-      label: 'All Content',
-      description: 'Generate materials covering all course content',
+      value: 'selected_content',
+      label: 'Selected Content',
+      description: 'Generate materials based on specific selected content',
       icon: <BookOpen className="w-5 h-5" />
     },
     {
@@ -100,12 +102,6 @@ export function RightPanel({ courseId }: RightPanelProps) {
       label: 'Knowledge Gaps',
       description: 'Focus on areas where you need improvement',
       icon: <AlertCircle className="w-5 h-5" />
-    },
-    {
-      value: 'specific_sections',
-      label: 'Specific Sections',
-      description: 'Select specific topics or modules to focus on',
-      icon: <Filter className="w-5 h-5" />
     }
   ]
 
@@ -131,8 +127,8 @@ export function RightPanel({ courseId }: RightPanelProps) {
     
     if (contentFocus === 'knowledge_gaps') {
       focusLabel = ' (Knowledge Gaps)';
-    } else if (contentFocus === 'specific_sections' && specificSections.length > 0) {
-      focusLabel = ` (${specificSections.length} Sections)`;
+    } else if (contentFocus === 'selected_content') {
+      focusLabel = ' (Selected Content)';
     }
     
     // For music, add genre info to the label
@@ -145,6 +141,13 @@ export function RightPanel({ courseId }: RightPanelProps) {
       specificSections: contentFocus === 'specific_sections' ? specificSections : []
     }
 
+    // Get selected content for API calls
+    const selectedContentTitles = contentFocus === 'selected_content' 
+      ? selectedMaterials
+          .filter(item => item.isSelected)
+          .map(item => item.title)
+      : [];
+    
     // Generate specific content based on material type
     if (type === 'quiz') {
       // Call API to generate quiz
@@ -161,8 +164,9 @@ export function RightPanel({ courseId }: RightPanelProps) {
             courseCode: 'CSE 110',
             questionCount: 10,
             difficulty: 'intermediate',
-            generationType: contentFocus === 'knowledge_gaps' ? 'learning_gaps' : 'general_content',
-            studentId: 'student-123' // Mock student ID
+            generationType: contentFocus === 'knowledge_gaps' ? 'learning_gaps' : 'selected_content',
+            studentId: 'student-123', // Mock student ID
+            selectedContent: selectedContentTitles
           })
         });
         
@@ -200,8 +204,9 @@ export function RightPanel({ courseId }: RightPanelProps) {
             courseCode: 'CSE 110',
             cardCount: 10,
             difficulty: 'intermediate',
-            generationType: contentFocus === 'knowledge_gaps' ? 'learning_gaps' : 'general_content',
-            studentId: 'student-123' // Mock student ID
+            generationType: contentFocus === 'knowledge_gaps' ? 'learning_gaps' : 'selected_content',
+            studentId: 'student-123', // Mock student ID
+            selectedContent: selectedContentTitles
           })
         });
         
@@ -296,7 +301,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
     setCreatedMaterials(prev => [...prev, newMaterial])
     // Reset the form
     setSelectedMaterialType(null)
-    setContentFocus('all')
+    setContentFocus('selected_content')
     setSpecificSections([])
     setSelectedGenre('pop')
     setShowFocusDropdown(false)
@@ -535,10 +540,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
                       onClick={() => {
                         setContentFocus(option.value)
                         setShowFocusDropdown(false)
-                        // If specific sections is selected, open the sections dropdown
-                        if (option.value === 'specific_sections') {
-                          setTimeout(() => setShowSectionsDropdown(true), 100)
-                        }
+                        // No need to open sections dropdown anymore as we've removed that option
                       }}
                     >
                       <div className={cn(
@@ -592,52 +594,7 @@ export function RightPanel({ courseId }: RightPanelProps) {
               </div>
             )}
             
-            {/* Specific Sections Dropdown (only when 'specific_sections' is selected) */}
-            {contentFocus === 'specific_sections' && (
-              <div className="relative">
-                <div className="text-xs text-gray-500 mb-1">Selected Sections ({specificSections.length})</div>
-                <div 
-                  className="border border-gray-300 rounded-md p-2 flex justify-between items-center cursor-pointer hover:border-gray-400"
-                  onClick={() => setShowSectionsDropdown(!showSectionsDropdown)}
-                >
-                  <span className="text-sm">
-                    {specificSections.length === 0 
-                      ? "Select sections" 
-                      : `${specificSections.length} section${specificSections.length > 1 ? 's' : ''} selected`}
-                  </span>
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
-                </div>
-                
-                {showSectionsDropdown && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                    {courseSections.map((section) => (
-                      <div
-                        key={section.id}
-                        className={cn(
-                          "flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer",
-                          specificSections.includes(section.id) ? "bg-red-50" : ""
-                        )}
-                        onClick={() => toggleSection(section.id)}
-                      >
-                        <div className={cn(
-                          "w-4 h-4 rounded border flex items-center justify-center",
-                          specificSections.includes(section.id) 
-                            ? "bg-asu-maroon border-asu-maroon text-white" 
-                            : "border-gray-300"
-                        )}>
-                          {specificSections.includes(section.id) && (
-                            <svg width="10" height="10" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
-                        </div>
-                        <span className="text-sm">{section.title}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            {/* Keep selected sections state and functionality, but only show UI for specific use cases */}
             
             {/* Generate Button */}
             <div className="mt-2 flex justify-end">

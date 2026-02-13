@@ -14,8 +14,9 @@ interface FlashcardRequest {
   courseCode?: string;
   cardCount?: number;
   difficulty?: 'basic' | 'intermediate' | 'advanced';
-  generationType?: 'learning_gaps' | 'general_content';
+  generationType?: 'learning_gaps' | 'selected_content';
   studentId?: string;
+  selectedContent?: string[];
 }
 
 // Remove edge runtime to allow file system access
@@ -109,7 +110,7 @@ export async function POST(req: NextRequest) {
     apiEndpoint: process.env.CREATE_AI_API_ENDPOINT ? process.env.CREATE_AI_API_ENDPOINT.substring(0, 15) + '...' : 'missing'
   });
   try {
-    const { topic, courseId, courseName, courseCode, cardCount = 5, difficulty = 'intermediate', generationType = 'general_content', studentId }: FlashcardRequest = await req.json();
+    const { topic, courseId, courseName, courseCode, cardCount = 5, difficulty = 'intermediate', generationType = 'selected_content', studentId, selectedContent = [] }: FlashcardRequest = await req.json();
     
     // If using mock data, return immediately
     if (USE_MOCK_DATA) {
@@ -141,6 +142,10 @@ export async function POST(req: NextRequest) {
           `- ${gap.topic}: Student answered "${gap.studentAnswer}" but correct answer is "${gap.correctAnswer}" (from ${gap.itemTitle})`
         ).join('\n')}\n\nFocus your flashcards on these specific areas where the student needs improvement.`;
       }
+    } else if (generationType === 'selected_content' && selectedContent && selectedContent.length > 0) {
+      console.log('Using selected content:', selectedContent.length);
+      
+      knowledgeContext = `\n\nFocus on the following selected content:\n${selectedContent.map(content => `- ${content}`).join('\n')}\n\nCreate flashcards that specifically cover this selected content.`;
     } else {
       const generalTopics = extractGeneralTopics(courseItems);
       console.log('Found general topics:', generalTopics.length);
