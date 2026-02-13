@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { PreparationLayout } from '@/components/preparation/PreparationLayout'
+import { SessionTracker } from '@/lib/session-tracker'
 
 export default function CustomPreparationPage() {
   const params = useParams()
@@ -32,6 +33,14 @@ export default function CustomPreparationPage() {
         : s
     )
     localStorage.setItem('customStudySessions', JSON.stringify(updatedSessions))
+    
+    // Track this session using our session tracker
+    SessionTracker.trackSession({
+      id: sessionId,
+      title: session.title || 'Custom Study Session',
+      isCustom: true,
+      path: `/preparation/custom/${sessionId}`
+    })
   }, [sessionId, router])
 
   if (!sessionData) {

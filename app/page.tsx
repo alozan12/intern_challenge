@@ -6,6 +6,7 @@ import { AnalyticsCarousel } from '@/components/landing/AnalyticsCarousel'
 import { PreviousSessionCard } from '@/components/landing/PreviousSessionCard'
 import { AIInsights } from '@/components/landing/AIInsights'
 import { MiniCalendar } from '@/components/landing/MiniCalendar'
+import { QuickAccessCards } from '@/components/landing/QuickAccessCards'
 import { Course, Analytics } from '@/types'
 import { ArrowRight, SunMedium } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -224,11 +225,15 @@ export default function LandingPage() {
         initial="hidden"
         animate="visible"
         className="flex flex-col lg:flex-row gap-6 max-w-full overflow-hidden">
-        {/* Left Section: AI Insights (66% width) */}
+        {/* Left Section: Quick Access Cards and AI Insights (66% width) */}
         <motion.section 
           variants={itemVariants}
-          className="w-full lg:w-2/3"
+          className="w-full lg:w-2/3 space-y-6"
         >
+          {/* Quick Access Cards */}
+          <QuickAccessCards analytics={mockAnalytics} />
+          
+          {/* AI Insights */}
           <AIInsights />
         </motion.section>
 
